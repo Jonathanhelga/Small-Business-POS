@@ -3,7 +3,6 @@
 const express = require('express');
 const cors = require('cors');
 
-require('./server/initDB');
 
 const itemRoutes = require('./server/routes/inventory_routes');
 const orderItemRoutes = require('./server/routes/transaction_controller');
