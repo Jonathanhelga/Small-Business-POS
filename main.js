@@ -40,6 +40,5 @@ app.on('window-all-closed', () => {
 });
 
 app.on('quit', () => {
-  // 👉 Kill backend when Electron quits
   if (backendProcess) backendProcess.kill();
 });
