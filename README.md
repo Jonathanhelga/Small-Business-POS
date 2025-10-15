@@ -163,18 +163,7 @@ explanation of what each file does:
             5. Database queries - Executes SELECT operations on Bills and Bill_Item tables with custom formatting
             6. Error handling - Manages database errors and invalid bill ID requests with appropriate status codes
             7. JSON responses - Returns structured data for frontend order history display and receipt generation
-    - database_pool.js
-        1. Connection pooling - Creates reusable MySQL connection pool for efficient database access
-        2. Pool configuration - Sets connection limits (10 concurrent) and queue management for load handling
-        3. Promise-based interface - Wraps mysql2 pool with promises for async/await compatibility
-        4. Connection testing - Verifies database connectivity on startup with success/error logging
-        5. Resource management - Handles connection acquisition and release automatically
-        6. Environment integration - Imports database credentials from config.js for centralized settings
-        7. Error handling - Catches and logs connection failures during initialization
-    - config.js
-        1. Database credentials - Stores MySQL host, username, password, and database name
-        2. Server port - Defines backend API port (3001)
-        3. centralized settings - Single source for all backend configuration values
-        4. Environment separation - Allows easy modification for different deployment environments
-
-
+    - db.js
+    - initDB.js
+       1. Automatically creates the database structure, so the app is ready to use immediately after download
+       2. eliminating manual configuration steps for new users
