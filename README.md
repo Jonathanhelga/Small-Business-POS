@@ -1,8 +1,12 @@
 # Small-Business-POS
 
-I started this project on August 15, 2025. (I wish I'd uploaded my progress to GitHub earlier, but I fell into the classic trap of waiting for it to be "good enough." Lesson learned—progress over perfection!)
-I built this project for my parents, who are planning to open an electric shop. They needed a simple but reliable POS (Point of Sale) system to manage inventory, track stock, and handle customer orders.  
-Besides helping my parents, I also created this project to improve my web development skills and gain a deeper understanding of JavaScript’s multi-function capabilities.
+**Started:** August 15, 2025
+
+I built this project for my parents, who are planning to open an electric shop. They needed a simple but reliable POS (Point of Sale) system to manage inventory, track stock, and handle customer orders.
+
+Beyond solving a real business need, this project has been an invaluable learning experience for improving my web development skills and gaining a deeper understanding of JavaScript's multi-function capabilities.
+
+> **Note:** I wish I'd uploaded my progress to GitHub earlier, but I fell into the classic trap of waiting for it to be "good enough." Lesson learned—progress over perfection!
 
 
 ## Getting Started
