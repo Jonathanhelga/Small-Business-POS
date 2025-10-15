@@ -16,10 +16,10 @@ Below you'll find detailed explanations of each file and its purpose. If you'd l
 POS APP I CREATED STEP BY STEP:
 1. create an empty folder
 2. initialize Node (npm init -y) it will create package.json
-3. install all dependencies I use Node.JS/Express (npm install express mysql2 cors)
+3. install all dependencies I use Node.JS/Express (npm install express sqlite3 cors)
     These packages will be listed under "dependencies" in package.json.
     - express → Web framework for building APIs (your Node backend).
-    - mysql2 → MySQL client library that lets Node connect and query your MySQL/SQLite DB.
+    - sqlite3 → sqlite client library that lets Node connect and query SQLite DB.
     - cors → Middleware that controls which frontend can call your backend API.
 4. npm install --save-dev nodemon (developer tool)
     nodemon automatically restarts the Node server when code is changed.
