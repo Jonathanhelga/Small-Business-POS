@@ -1,0 +1,41 @@
+{
+  "name": "electric-shop-offline2",
+  "version": "1.0.0",
+  "main": "main.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "dist":"electron-builder"
+  },
+  "build": {
+    "appId": "com.jonathanhelga.electricshop",
+    "productName": "Electric Shop offline",
+    "files": [
+      "main.js",
+      "app.js",
+      "public/**/*",
+      "server/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "mysql2": "^3.15.0"
+  },
+  "devDependencies": {
+    "electron": "^38.1.2",
+    "electron-builder": "^26.0.12"
+  }
+}
