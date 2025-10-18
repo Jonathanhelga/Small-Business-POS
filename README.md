@@ -25,14 +25,15 @@ POS APP I CREATED STEP BY STEP:
     nodemon automatically restarts the Node server when code is changed.
     - Saves time so I don’t have to stop/start manually.
 
+```tree
 electric-shop/
- ├─ node_modules
- ├─ package.json
- ├─ package-lock.json
- ├─ app.js
- └─ public/     ← frontend files (CSS, JS, assets)
- └─ server/     ← server files (routes, database)
-
+├─ node_modules/
+├─ package.json
+├─ package-lock.json
+├─ app.js
+├─ public/          # frontend files (CSS, JS, assets)
+└─ server/          # server files (routes, database)
+```
 set up the database by using mysql (so you need to have XAMPP) :
 - I designed and implemented a POS (Point of Sale) database for my parents’  electric shop. The database is named electric_shop and is structured to support inventory management, billing, and sales tracking
     1. Item_Inventory (Stores detailed information about every product)
