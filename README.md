@@ -24,6 +24,7 @@ POS APP I CREATED STEP BY STEP:
 4. npm install --save-dev nodemon (developer tool)
     nodemon automatically restarts the Node server when code is changed.
     - Saves time so I don’t have to stop/start manually.
+
 electric-shop/
  ├─ node_modules
  ├─ package.json
