@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>P O S system</title>
+</head>
+<body>
+    <template id="itemButtonTemplate">
+        <button class="itemButton">Item</button>
+    </template>
+    <template id="updateQuantityTemplate">
+      <div class="item-card">
+        <div class="item-header">
+            <div class="item-info">
+                <div class="item-name"><span class="js-item-name"></span></div>
+                <div class="item-sku"><span class="js-sku"></span></div>
+                <div class="price-info">
+                    <div class="price-item">Cost: <span class="price-value js-cost-value"></span></div>
+                    <div class="price-item">Sell: <span class="price-value js-sell-value"></span></div>
+                </div>
+            </div>
+        </div>
+    
+        <div class="stock-section">
+            <div class="current-stock">
+                <div class="stock-label">Current Stock</div>
+                <div class="stock-value"><span class="js-stock-value"></span></div>
+                <div class="minimum-stock">Min Level:<span class="js-min-stock"></span> <span class="status"></span></span></div>
+            </div>
+        </div>
+    
+        <div class="order-stock">
+            <label>New Incoming Stock Quantity</label>
+            <input type="number" class="js-new-stock" placeholder="Enter quantity" min="0">
+        </div>
+    
+        <div class="order-actions">
+            <button type="button" class="js-save-btn">Save</button>
+        </div>
+      </div>
+    </template>
+    <template id="barcodeGeneratorTemplate">
+        <div class="barcode-card">
+            <div class="barcode-header">
+                <h3 class="itemName-barcode"><span class="js-itemName-barcode"></span></h3>
+                <h5 class="itemSKU-barcode"><span class="js-itemSKU-barcode"></span></h5>
+            </div>
+            <div class="barcode-buttons">
+                <button class="paper-barcode-button">Paper</button>
+                <!-- <button class="sticker-barcode-button">Sticker</button> -->
+            </div>
+            <div class="barcode-input-wrapper">
+                <label class="custom-file-upload">
+                    Upload Product Photo
+                    <input type="file" accept="image/jpeg, image/png, image/jpg" class="paper-barcode-input">
+                </label>
+                <span class="js-file-name"></span>
+            </div>
+        </div>
+    </template>
+    <template id="paperBarcodeTemplate">
+        <section class="container-paperBarcode">
+            <div class="store-name">
+                <div>⚡</div>
+                <div>ELECTRIC SHOP</div>
+            </div>
+            <div class="item-name"> <h1>    <span class="js-barcode-item-name"></span>      </h1> </div>
+            <div> <img class="item-img" alt="Wrench"> </div>
+            <div class="item-price">    <span class="js-barcode-item-price"></span>     </div>
+            <div> <svg class="barcode"></svg> </div>
+        </section>
+    </template>
+      
+    <form id="addItemForm">
+        <div id="newItemBackdrop">
+          <div id="newItemPanel">
+            <h3>Add New Item</h3>
+      
+            <section>
+              <label for="tagsColor">Tag Color:</label>
+              <select id="tagsColor" class="tags">
+                <option value="green">Green</option>
+                <option value="orange">Orange</option>
+                <option value="red">Red</option>
+                <option value="blue">Blue</option>
+              </select>
+            </section>
+      
+            <section>
+              <label for="sku">SKU:</label>
+              <input type="text" id="sku" placeholder="SKU" />
+      
+              <label for="itemName">Item Name:</label>
+              <input type="text" id="itemName" placeholder="Item Name"/>
+            </section>
+      
+            <section>
+              <label for="tagsCategory">Category:</label>
+              <select id="tagsCategory" class="tags">
+                <option value="Lighting">Lighting</option>
+                <option value="Cables & Cords">Cables & Cords</option>
+                <option value="Electrical Wire">Electrical Wire</option>
+                <option value="Outlets & Switches">Outlets & Switches</option>
+                <option value="Smart Home">Smart Home</option>
+              </select>
+            </section>
+      
+            <section>
+              <label for="costPrice">Cost Price (IDR):</label>
+              <input type="text" id="costPrice" placeholder="Cost Price (IDR)" oninput="formatRupiahInput(this)" />
+      
+              <label for="itemPrice">Selling Price (IDR):</label>
+              <input type="text" id="itemPrice" placeholder="Selling Price (IDR)" oninput="formatRupiahInput(this)" />
+            </section>
+      
+            <section>
+              <label for="minimum_stock_level">Minimum Stock Level:</label>
+              <input type="number" id="minimum_stock_level" placeholder="Minimum Stock Level" step="0.01" min="0">
+            </section>
+      
+            <section>
+              <label>Item Quantity & Unit:</label>
+              <div class="quantity-unit-container">
+                <input type="number" id="itemQty" placeholder="Item Quantity" />
+                <select id="itemUnit">
+                  <option value="pcs">Pieces</option>
+                  <option value="m">Meters</option>
+                  <option value="kg">Kilograms</option>
+                  <option value="l">Liters</option>
+                  <option value="ft">Feet</option>
+                  <option value="cm">Centimeters</option>
+                  <option value="g">Grams</option>
+                  <option value="ml">Milliliters</option>
+                  <option value="box">Boxes</option>
+                  <option value="pack">Packs</option>
+                </select>
+              </div>
+            </section>
+      
+            <section>
+              <label for="supplier_info">Supplier Info:</label>
+              <input type="text" id="supplier_info" maxlength="255" placeholder="e.g., PT. FreshGoods Supplier">
+            </section>
+      
+            <section>
+              <label for="description">Description:</label>
+              <textarea id="description" name="description" rows="5" placeholder="Write your description here..."></textarea>
+            </section>
+      
+            <div class="button-group">
+              <button type="submit">Add Item</button>
+              <button type="button" onclick="closePanel('addItemForm', 'newItemBackdrop')">Cancel</button>
+            </div>
+          </div>
+        </div>
+    </form>
+      
+    <form id="orderItemForm">
+        <div id="orderItemBackdrop">
+            <div id="orderPanel" class="hidden">
+                <div id="fixedDisplay">
+                    <h1>Item Detail</h1>
+                    <h3 id="skuDisplay"></h3>
+                    <h3 id="itemNameDetail"></h3>
+                </div>
+                <div id="unfixedDisplay">
+                    <h3>Price : Rp. <span id="itemPriceSell"></span></h3>
+                    <h3>Stock : <span id="itemStock"></span></h3>
+                    <label for="quantityInput">Quantity:</label>
+                    <input type="number" id="quantityInput" step="0.1" min="0" placeholder="Enter quantity" value="1">
+                    <div class="button-group">
+                        <button type="submit">OK</button>
+                        <button type="button" onclick="closePanel('orderItemForm', 'orderItemBackdrop')">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div id="orderHistoryModal" class="orderModal">
+        <div class="modal-title">
+            <h2 style="display:inline-block;">Order History</h2>
+            <span class="close-btn" onclick="closeOrderHistory()">&times;</span>
+        </div>
+          
+        <div class="modal-content">
+            <div class="modal-body">
+              <!-- Left side: list of orders -->
+              <div class="order-History-list">
+                <div id="orderHistoryList"></div>
+                <div id="NoOrderHistory"></div>
+              </div>
+              
+              <!-- Right side: bill preview -->
+              <div id="orderDetails">
+                <div id="orderDetailsBill" class="bill-preview">
+                    <div class="bill-preview" id="billPreview">
+                        <!-- Bill Header -->
+                        <div class="bill-header">
+                            <div class="shop-name">⚡ ELECTRIC SHOP</div>
+                            <div class="shop-tagline">Your Trusted Electrical Solution</div>
+                            <div class="shop-details">
+                                Jl. Listrik Raya No. 123<br>
+                                Jakarta Pusat, DKI Jakarta 10250<br>
+                                Tel: (021) 1234-5678<br>
+                                Email: info@electricshop.com
+                            </div>
+                        </div>
+                        
+                        <!-- Bill Info -->
+                        <div class="bill-info">
+                            <div>
+                                <div class="bill-number">Invoice: <span id="invoiceNumber">000</span></div>
+                                <div>Cashier: Admin</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div id="billDate">00/00/0000</div>
+                                <div id="billTime">00:00:00</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Items Table -->
+                        <div class="bill-items debug">
+                            <div class="items-header">
+                                <div id="ItemNamedHeader">Item</div>
+                                <div>Qty</div>
+                                <div>Price</div>
+                                <div>Total</div>
+                            </div>
+                            <div id="billItemsList">
+                                <div class="bill-item">
+                                    <div>
+                                        <div class="item-name-cell"></div>
+                                        <div class="item-sku-cell"></div>
+                                    </div>
+                                    <div class="qty-cell"></div>
+                                    <div class="price-cell"></div>
+                                    <div class="total-cell"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Bill Summary -->
+                        <div class="bill-summary">
+                            <div class="summary-row">
+                                <span>Total Items:</span>
+                                <span id="billTotalItems"> 0 </span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Subtotal: </span>
+                                <span id="billSubtotal">RP. 0</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Tax (0%):</span>
+                                <span id="billTax">Rp. 0</span>
+                            </div>
+                            <div class="summary-total">
+                                <span>GRAND TOTAL:</span>
+                                <span id="billGrandTotal">Rp. 0</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div class="bill-footer">
+                            <div class="thank-you">Thank You for Your Purchase!</div>
+                            <div>Goods sold cannot be returned</div>
+                            <div>Please check your items before leaving</div>
+                            <div style="margin-top: 15px;">
+                                Visit us again at www.electricshop.com
+                            </div>
+                        </div>
+                    </div>
+                </div>
+              </div>
+            </div>
+        </div>          
+    </div>
+    
+    <div id="updateQuantityModal" class="UpdateQuantityModal">
+        <div class="modal-container">
+            <div class="quantity-modal-title">
+                <h2>Update Quantity</h2>
+                <span class="close-btn" onclick="closeUpdateQuantity()">&times;</span>
+            </div>
+          
+            <div class="quantity-modal-body">
+                <div id="itemList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="storeFeaturesModal" class="storeFeaturesModal"> 
+        <div class="features-button">
+            <div class="features-button-title">
+                <h1>Features</h1>
+                <span class="close-btn" onclick="closeFeaturesModal()">&times;</span>
+            </div>
+            <div class="features-button-body">
+                <button id="updateItemInventory">Update Inventory</button>
+                <button id="">Item Information</button>
+                <button id="">KeyStats</button>
+                <button id="generateBarcode">Generate Barcode</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="barcodeGeneratorModal" class="barcodeGeneratorModal">
+        <div class="modal-box">
+            <div class="barcode-generator-title">
+                <h2>Barcode Generator</h2>
+                <button class="close-btn" aria-label="Close" onclick="closeBarcodeGenerator()">&times;</button>
+            </div>
+      
+            <div class="barcode-generator-content">
+                <div class="barcode-generator-list" id="barcode-item-list">
+                </div>
+      
+                <div class="barcode-display" id="barcode-display">
+                    
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+      
+
+    <div class="container">
+        <!-- The left panel displays the details of the items that have been ordered by the customer -->
+    <div class="leftContainer">
+        <section class="leftTopPanel">
+            <h2>Ordered Items:</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody id="orderTableBody">
+                    <tr class="empty-state">
+                        <td colspan="3">No items ordered yet</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        <section class="middlePanel">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Total Items</th>
+                        <th>Price Total</th>
+                    </tr>
+                </thead>
+                <tbody id="orderTableSummary">
+                        <td> <span id="totalItemsOrdered"></span></td>
+                        <td> <span id="priceTotalOrdered"></span></td>
+                </tbody>
+            </table>
+        </section>
+        <section class="leftBelowPanel">
+            <div class="leftBelowButton">
+                <button type="button" onclick=resetOrderTable()>Reset</button>
+                <button id="removeBtn" type="button" onclick=removeSelectedItem() disabled>Remove Item</button>
+                <button type="submit" id="submitOrder">Print Bill</button>
+            </div>
+            <div class="leftBelowButton">
+                <button type="button" id="orderHistory">Order History</button>
+            </div>
+                    <div class="display">
+                        <div id="date"></div><br>
+                        <div id="time"></div>
+                    </div>
+        </section>
+    </div>
+
+        <!-- The right panel is used to manage order actions. When the user selects or confirms a purchase, the corresponding order details will appear in the left panel -->
+    <div class="rightPanel">
+        <div class="topRightPanel">
+                <p id="topRightPanelText"><strong>Search items to order:</strong></p>
+                <div class="search-container">
+                    <input type="search" id="itemSearch" name="itemSearch" placeholder="Search products, SKU, or category...">
+                </div>
+                <div class="buttonGroup">
+                    <button id="addNewItemBtn">Add New Item</button>
+                    <button id="storeFeaturesBtn" onclick="openFeaturesModal()">Other Features</button>
+                    <!-- <button id="updateItemInventory">Update Inventory</button> -->
+                </div>
+            </div>
+            <div id="itemsLocation"></div>
+            <div id="noItemLocation"></div>
+        </div>
+    </div>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.12.1/JsBarcode.all.min.js" integrity="sha512-fLmJPYDfCIAZ0gpG/iiIzPw113KquhzI1bxG0XhiLYyqm8Ax2lEiq1h1qv2vafH9tLzkjm4HYRWSeKoGFH4xIw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="module" src="./js/scripts.js"></script>
+<script>
+function formatRupiahInput(input) {
+    // Remove all non-numeric characters
+    let value = input.value.replace(/[^\d]/g, '');
+    
+    // Convert to number and format
+    if (value) {
+        let numValue = parseInt(value);
+        input.value = formatRupiah(numValue);
+        
+        // Store raw value in data attribute for form submission
+        input.setAttribute('data-raw-value', numValue);
+
+    } 
+    else {
+        input.value = '';
+        input.setAttribute('data-raw-value', '0');
+    }
+}
+function formatRupiah(number) {
+    return new Intl.NumberFormat('id-ID').format(number);
+}
+</script>
+</html>

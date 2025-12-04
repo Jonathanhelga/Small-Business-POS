@@ -1,0 +1,53 @@
+* {
+    box-sizing: border-box;
+}
+body{
+    background: rgb(158, 145, 145);
+    height: 100vh;
+    margin: 10px;
+    display: grid;
+    place-items: center;
+}
+
+.barcode-container{
+    font-family:'Courier New', Courier, monospace;
+    background: rgb(158, 145, 145);
+    padding: 40px;
+    border-radius: 10px;
+    border: 3px ridge rgb(191, 231, 236);
+    box-shadow: 0 0 10px rgba(233, 0, 0, 0.1);
+    width: 90%;
+    max-width: 500px;
+    height: 70%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.barcode-container h2{
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+.barcode-input{
+    padding: 12px 24px;
+    margin: 10px;
+    width: 80%;
+    border: 2px ridge rgb(89, 89, 89);
+    border-radius: 8px;
+    font-size: 16px;
+}
+
+.generate-btn{
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor:pointer;
+    background: green;
+    color: white;
+    border: none;
+    border-radius: 8px;
+}
+
+.generate-btn:hover{
+    background: rgb(80, 113, 80);
+} 

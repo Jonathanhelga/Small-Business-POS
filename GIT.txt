@@ -1,0 +1,71 @@
+Git is a shipping company.
+1. Working Directory: The warehouse floor (where we are building stuff)
+2. Staging Area (git add): The loading Dock (boxing things up)
+3. Local Repo (git commit): The truck (sealed and recorded in the logbook)
+4. Remote Repo (git push): the Destination (Github servers)
+
+Step by step:
+1. git init (turn this folder into a git repository)
+2. git branch -M main (tell git that the default branch is named 'main' (Modern standard))
+3. git remote add origin https://github.com/Jonathanhelga/Personal-Website.git (connect the local warehouse to the destination)
+4. git remote -v (Verify it worked)
+(if connected you should see origin listed twice, for fetch and push).
+
+PHASE 2 (Save & Ship) 
+1. Check the status before (git status)
+    - Red files: Modified but not staged (not in the box).
+    - Green files: Staged and ready to commit (in the box).
+2. Box it up (Add to the box) you have a modified README. Put them in the box.
+DISCLAIMER: IF you don't have .gitignore or README.md dont do git add .
+    - git add .
+3. Seal the box and commit, this creates a permanent snapshot
+    - git commit -m "feat: initial project upload with documentation"
+NOTE TO REMEMBER :
+Never write a lazy message like "update". Use the format: type: description.
+
+feat: for new things.
+
+fix: for bugs.
+
+docs: for README changes.
+
+style: for CSS changes.
+
+4. Send the truck (Push) this sends my local commit to GitHub server
+    # -u means "upstream". You only need to type -u the very first time.
+    # After this, you can just type "git push".
+    git push -u origin main
+    git push
+
+if face an error 
+Scenario: You try to push, and the terminal screams:
+
+Permission denied (publickey) or Authentication failed.
+
+The Problem: GitHub doesn't know who you are. You can't just push code to Jonathan's repo without proving you are Jonathan.
+
+The Fix: If you see an error asking for a password, do not type your GitHub password. It won't work. You need a Personal Access Token (PAT) or to use the GitHub CLI.
+
+The easiest way for a student:
+
+Download GitHub CLI (gh).
+
+Run: gh auth login in your terminal.
+
+Follow the prompts (select GitHub.com -> HTTPS -> Login with Browser).
+
+Your Action: Perform Phase 1 and Phase 2 right now. If you get an error, paste the exact error message here. Do not guess the solution.
+
+
+IMPORTANTE:
+I should explicitly set my name and email to match the one you use professionally 
+(the one associated with my GitHub account).
+
+here's how :
+git config --global user.name "Your Full Professional Name"
+git config --global user.email "jonathanhelgalie@gmail.com"
+
+
+git commit -m "feat: add mobile view system" -m "- Created MobileView component" -m "- Updated App.css media queries" -m "- Fixed alignment in About Me section"
+
+git commit -m "feat: set a minimum size screen to view the website" -m "style: change the layout for AboutMe and allow scroll for description in small devices"

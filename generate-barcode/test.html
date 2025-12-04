@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .user-card { 
+            border: 2px solid #ddd; 
+            padding: 15px; 
+            margin: 10px;
+        }
+        #user-email { 
+            border: 3px solid red; /* Only applies to FIRST input */
+        }
+    </style>
+</head>
+<body>
+    <h1>🔴 BAD Example - With IDs</h1>
+    <button id="add-user-bad">Add User (Bad)</button>
+    <div id="bad-container"></div>
+
+    <template id="bad-template">
+        <div class="user-card">
+            <h3>User Form</h3>
+            <label for="user-email">Email:</label>
+            <input type="email" id="user-email" placeholder="Enter email">
+            <button class="save-bad">Save</button>
+        </div>
+    </template>
+
+    <hr>
+
+    <h1>✅ GOOD Example - Without IDs</h1>
+    <button id="add-user-good">Add User (Good)</button>
+    <div id="good-container"></div>
+
+    <template id="good-template">
+        <div class="user-card">
+            <h3>User Form</h3>
+            <label>
+                Email:
+                <input type="email" class="user-email-input" placeholder="Enter email">
+            </label>
+            <button class="save-good">Save</button>
+        </div>
+    </template>
+
+    <script>
+        // BAD VERSION
+        document.getElementById('add-user-bad').addEventListener('click', () => {
+            const template = document.getElementById('bad-template');
+            const clone = template.content.cloneNode(true);
+            
+            clone.querySelector('.save-bad').addEventListener('click', () => {
+                // THIS ALWAYS GETS THE FIRST INPUT'S VALUE
+                const email = document.getElementById('user-email').value;
+                alert(`❌ BAD: Got email: ${email}`);
+            });
+            
+            document.getElementById('bad-container').appendChild(clone);
+        });
+
+        // GOOD VERSION
+        document.getElementById('add-user-good').addEventListener('click', () => {
+            const template = document.getElementById('good-template');
+            const clone = template.content.cloneNode(true);
+            
+            const emailInput = clone.querySelector('.user-email-input');
+            
+            clone.querySelector('.save-good').addEventListener('click', () => {
+                // THIS GETS THE CORRECT INPUT'S VALUE
+                alert(`✅ GOOD: Got email: ${emailInput.value}`);
+            });
+            
+            document.getElementById('good-container').appendChild(clone);
+        });
+    </script>
+</body>
+</html>
