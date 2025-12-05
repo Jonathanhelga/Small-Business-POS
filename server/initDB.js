@@ -4,6 +4,22 @@ async function createTables(){
     const db = await dbPromise;
     // 1. Item_Inventory table
     await db.exec(`PRAGMA foreign_keys = ON;`)
+
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS Business_Information(
+            businessID INTEGER PRIMARY KEY DEFAULT 1 CHECK (businessID = 1),
+            business_name TEXT,
+            business_address TEXT,
+            business_phone TEXT,
+            business_instagram TEXT,
+            business_email TEXT,
+            tax_rate REAL DEFAULT 0,
+            invoice_prefix TEXT DEFAULT 'INV-',
+            printer_size INTEGER DEFAULT 80,
+            footer_message TEXT
+        );
+    `);
+
     await db.exec(`
         CREATE TABLE IF NOT EXISTS Item_Inventory (
             itemID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +53,7 @@ async function createTables(){
             date_time TEXT DEFAULT (datetime('now')),
             total_amount REAL NOT NULL DEFAULT 0,
             customer_name TEXT DEFAULT NULL,
-            payment_method TEXT NOT NULL DEFAULT 'Cash' CHECK(payment_method IN ('Cash', 'Transfer', 'Card')),
+            payment_method TEXT NOT NULL DEFAULT 'Cash',
             status TEXT NOT NULL DEFAULT 'Active' CHECK(status IN ('Active','Canceled'))
         );
     `);
@@ -58,6 +74,5 @@ async function createTables(){
     `);
 
     console.log("SQLite tables are ready.");
-
 }
 createTables();

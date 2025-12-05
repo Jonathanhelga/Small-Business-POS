@@ -28,4 +28,7 @@ build/
 *.tmp
 *.bak
 
+*.sqlite
 *.txt
+
+setupWizard.html

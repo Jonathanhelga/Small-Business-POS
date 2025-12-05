@@ -7,6 +7,77 @@
     <title>P O S system</title>
 </head>
 <body>
+    <!-- SETUP WIZARD FORM -->
+    <div id="setupWizardForm">
+        <h1>Mini P O S.</h1>
+        <form id="setupForm" class="wizard-card">
+            <div class="wizard-header">
+                <div class="step-indicator">Step <span id="currentStepNum">1</span> of 3</div>
+                <h2 class="step-title" id="stepTitle">Store Identity</h2>   
+            </div>
+            <div class="wizard-body">
+
+                <div class="form-step active" id="step1">
+                    <div class="input-group">
+                        <label>Business Name</label>
+                        <input type="text" id="business-name" placeholder="e.g. Electric Shop" required>
+                        <div class="hint">This appears at the top of every bill.</div>
+                    </div>
+                    <div class="input-group">
+                        <label>Address</label>
+                        <textarea rows="3" id="business-address" placeholder="Street, City, Zip Code"></textarea>
+                        <div class="hint">Keep it under 3 lines for thermal paper.</div>
+                    </div>
+                    <div class="input-group">
+                        <label>Phone / Contact</label>
+                        <input type="tel" id="business-phone"placeholder="(09) 704192445" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Instagram</label>
+                        <input type="text" id="business-instagram" placeholder="@Hello_there">
+                    </div>
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="text" id="business-Email" placeholder="hello_there@gmail.com">
+                    </div>
+                </div>
+
+                <div class="form-step" id="step2">
+                    <div class="input-group">
+                        <label>Tax Rate (%)</label>
+                        <input type="number" id="taxRate" placeholder="0" min="0" max="100">
+                        <div class="hint">Leave 0 if you don't collect tax.</div>
+                    </div>
+                    <div class="input-group">
+                        <label>Invoice Prefix</label>
+                        <input type="text" id="invoice-prefix" placeholder="INV-">
+                    </div>
+                </div>
+
+                <div class="form-step" id="step3">
+                    <div class="input-group">
+                        <label>Printer Paper Size</label>
+                        <select id="paperSizeSelector">
+                            <option value="58">58mm (Small Thermal)</option>
+                            <option value="80" selected>80mm (Standard Thermal)</option>
+                            <!-- <option value="a4">A4 / Letter (Full Page)</option> -->
+                        </select>
+                        <div class="hint">Critical: This changes your bill layout.</div>
+                    </div>
+                    <div class="input-group">
+                        <label>Footer Message</label>
+                        <textarea id="footer-message" rows="2">Thank You for Your Purchase!</textarea>
+                        <div class="hint">This appears at the footer of every bill.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="wizard-footer">
+                <button class="btn btn-secondary" id="prevBtn" style="visibility: hidden;" onclick="changeStep(-1)">Back</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">Next Step</button>
+            </div>
+        </form>
+    </div>
+
     <template id="itemButtonTemplate">
         <button class="itemButton">Item</button>
     </template>
@@ -62,10 +133,7 @@
     </template>
     <template id="paperBarcodeTemplate">
         <section class="container-paperBarcode">
-            <div class="store-name">
-                <div>⚡</div>
-                <div>ELECTRIC SHOP</div>
-            </div>
+            <!-- <div class="store-name"> <span class="js-barcode-business-name"></span></div> -->
             <div class="item-name"> <h1>    <span class="js-barcode-item-name"></span>      </h1> </div>
             <div> <img class="item-img" alt="Wrench"> </div>
             <div class="item-price">    <span class="js-barcode-item-price"></span>     </div>
@@ -178,7 +246,6 @@
             </div>
         </div>
     </form>
-
     <div id="orderHistoryModal" class="orderModal">
         <div class="modal-title">
             <h2 style="display:inline-block;">Order History</h2>
@@ -199,13 +266,15 @@
                     <div class="bill-preview" id="billPreview">
                         <!-- Bill Header -->
                         <div class="bill-header">
-                            <div class="shop-name">⚡ ELECTRIC SHOP</div>
-                            <div class="shop-tagline">Your Trusted Electrical Solution</div>
+                            <div class="shop-name" id="shop-name">⚡️ELECTRIC SHOP</div>
+                            <div class="shop-tagline">dag dig dug dag dig dug</div>
                             <div class="shop-details">
-                                Jl. Listrik Raya No. 123<br>
-                                Jakarta Pusat, DKI Jakarta 10250<br>
-                                Tel: (021) 1234-5678<br>
-                                Email: info@electricshop.com
+                                <span id="shop-location"> 
+                                    Jl. Listrik Raya No. 123<br>
+                                    Jakarta Pusat, DKI Jakarta 10250
+                                </span><br>
+                                <b>Tel:</b> <span id="shop-telephone"> (021) 1234-5678 </span><br>
+                                <b>IG:</b> <span id="shop-instagram"> @Hello_User </span>
                             </div>
                         </div>
                         
@@ -264,11 +333,11 @@
                         
                         <!-- Footer -->
                         <div class="bill-footer">
-                            <div class="thank-you">Thank You for Your Purchase!</div>
+                            <div class="thank-you"><span id="bill-footer-message"></span></div>
                             <div>Goods sold cannot be returned</div>
                             <div>Please check your items before leaving</div>
                             <div style="margin-top: 15px;">
-                                Visit us again at www.electricshop.com
+                                E-mail : <span id="shop-email"></span>
                             </div>
                         </div>
                     </div>
@@ -324,9 +393,9 @@
             </div>
         </div>
     </div>
-      
 
-    <div class="container">
+
+    <div class="container" id="container">
         <!-- The left panel displays the details of the items that have been ordered by the customer -->
     <div class="leftContainer">
         <section class="leftTopPanel">

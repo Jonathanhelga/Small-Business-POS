@@ -27,7 +27,7 @@ const createCell = (className, text) => {
 async function fetchOrderHistory(){
     try{
         const response = await fetch(`${API_BASE}/api/orderHistory/bills`);
-        const data = await response.json();
+        const data = await response.json().catch(() => null);
         if (!response.ok) { 
             console.error("Backend error:", data?.error ||  "Unknown error");
             alert(`⚠️ Error: ${data?.error || "Failed to load items"}`);

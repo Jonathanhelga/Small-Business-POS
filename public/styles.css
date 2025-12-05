@@ -75,7 +75,122 @@ select {
 #time{
     font-size:2vw;
 }
+/**
+ * ====================================
+ * 1. SETUP WIZARD FORM
+ * ====================================
+ */
+#setupWizardForm{
+    display: none;
+    background-color: #6ea3c3f9;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    flex-direction: column;
+}
+#setupWizardForm.active{
+    display: flex;
+}
+#setupWizardForm h1{
+    font-family: 'Courier New', monospace;
+    color:rgb(0, 255, 234);
+    font-size: 8rem;
+    
+}
+.wizard-card {
+   background: white;
+   width: 100%;
+   max-width: 500px;
+   /* max-height: 500px; */
+   border-radius: 12px;
+   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+   overflow: hidden;
+   display: flex;
+   flex-direction: column;
+}
+.wizard-header {
+    background: #7db9de;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+.step-indicator {
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    margin-bottom: 5px;
+}
+.step-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 0;
+}
+.wizard-body {
+    padding: 30px;
+}
+.form-step {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+.form-step.active {
+    display: block;
+}
+.input-group {
+    margin-bottom: 20px;
+}
 
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #34495e;
+    font-size: 1.2em;
+}
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    box-sizing: border-box; /* Critical for padding */
+    font-size: 0.9em;
+    transition: border-color 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: #3498db;
+    outline: none;
+}
+.hint {
+    font-size: 0.8em;
+    color: #7f8c8d;
+    margin-top: 4px;
+}
+.wizard-footer {
+    padding: 20px 30px;
+    background: #f8f9fa;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.btn {
+    padding: 10px 24px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1em;
+}
+.btn-secondary {
+    background: #e0e0e0;
+    color: #333;
+}
+.btn-primary {
+    background: #2c3e50;
+    color: white;
+}
+.btn:hover { opacity: 0.9; }
 
 /**
  * ====================================
@@ -85,11 +200,14 @@ select {
  */
 
 .container {
-    display: flex;
+    display: none;
     height: 100vh;
     width: 100vw;
     padding: 10px;
     gap: 10px;
+}
+.container.active{
+    display: flex;
 }
 
 /* Left Section */
@@ -503,6 +621,7 @@ th{
 
 /* Make the form fill the screen and center its contents */
 #orderItemForm {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
@@ -511,7 +630,6 @@ th{
     justify-content: center;
     align-items: center;
     z-index: 10;
-    display: none;
 }
 #orderItemForm.active{
     display: flex;
@@ -706,7 +824,11 @@ label {
 #orderDetailsBill {
     width: 100%;
     max-width: 500px;
+    min-height: 80%;
+    max-height: 80%;
+    background-color: white;
     margin: 0 auto;
+    overflow-y: auto;
 }
   
 .order-card p, h3 {
@@ -729,14 +851,36 @@ label {
 
 
 /* --- BILL PREVIEW STYLES (Nested Component within Order History) --- */
+:root {
+    --paper-width: 80mm;     
+    --paper-padding: 10px;   
+    --base-font-size: 12px;  
+    --header-font-size: 1.4em;
+}
+/*Option A: 58mm Paper (The "Tiny" Receipt)*/
+.paper-58mm{
+    --paper-width: 58mm;
+    --paper-padding: 5mm;
+    --base-font-size: 10px; 
+    --header-font-size: 1.2em;
+}
+/* Option B: 80mm Paper (The "Standard" Receipt) */
+.paper-80mm{
+    --paper-width: 80mm;
+    --paper-padding: 10mm;
+    --base-font-size: 12px;
+    --header-font-size: 1.6em;
+}
+
 .bill-preview {
-    width: 100%;
-    max-width: 400px;
+    width: var(--paper-width);
     margin: 0 auto;
     background: rgb(253, 255, 216);
-    padding: 30px;
+    padding: var(--paper-padding);
     font-family: 'Courier New', monospace;
+    font-size: var(--base-font-size);
     line-height: 1.5;
+    border: 1px solid black;
 }
 
 .bill-header {
@@ -747,9 +891,9 @@ label {
 }
 
 .shop-name {
-    font-size: 1.8em;
+    font-size: var(--header-font-size);
     font-weight: bold;
-    color: #2c3e50;
+    color: #000000;
     margin-bottom: 8px;
 }
 
@@ -1095,7 +1239,6 @@ label {
     margin-bottom: 1vh;
     gap: 1vh; 
 }
-
 
 .features-button-body button{
     width: 15vw;       

@@ -8,7 +8,10 @@ import { loadListOfOrderHistory, viewOrderDetails, closeOrderHistory } from './o
 import {loadListItemQuantity} from './stock_manager.js';
 import { openFeaturesModal, closeFeaturesModal} from './features_button.js';
 import { openBarcodeGenerator, closeBarcodeGenerator } from "./barcode_handler.js";
+import { changeStep } from './setup_wizard.js';
 import { API_BASE } from './config.js';
+import { checkAppState } from "./checkAppState.js";
+checkAppState();
 function closePanel(panelID, panelBackDropID) {
   const panel = document.getElementById(panelID); 
   const backdrop = document.getElementById(panelBackDropID);
@@ -37,6 +40,10 @@ function addDoubleClickHint() {
 }
 
 let isSubmitting = false;
+document.getElementById('setupForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+});
+
 document.getElementById('addItemForm').addEventListener('submit', async function(e) {
   e.preventDefault();
 
@@ -199,3 +206,4 @@ window.closeOrderHistory = closeOrderHistory;
 window.openFeaturesModal  = openFeaturesModal;
 window.closeFeaturesModal = closeFeaturesModal;
 window.closeBarcodeGenerator = closeBarcodeGenerator;
+window.changeStep = changeStep;
