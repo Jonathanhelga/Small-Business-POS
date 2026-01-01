@@ -9,7 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
-    "dist":"electron-builder"
+    "dist": "electron-builder"
   },
   "build": {
     "appId": "com.jonathanhelga.electricshop",
@@ -19,8 +19,7 @@
       "app.js",
       "electricshop.sqlite",
       "public/**/*",
-      "server/**/*",
-      "node_modules/**/*"
+      "server/**/*"
     ],
     "mac": {
       "target": "dmg"
@@ -36,6 +35,7 @@
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
-    "electron": "^38.2.0"
+    "electron": "^38.2.0",
+    "electron-builder": "^26.0.12"
   }
 }

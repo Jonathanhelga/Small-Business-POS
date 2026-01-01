@@ -24,13 +24,15 @@ async function insertOrder(orderItems, customerName, paymentMethod){
         return sum + (parseFloat(item.price) * parseFloat(item.quantity));
     }, 0);
     const db = await dbPromise;
+    const orderDate = new Date().toISOString();
     const billSql = `
     INSERT INTO Bills (date_time, total_amount, customer_name, payment_method, status) 
-    VALUES (datetime('now'), ?, ?, ?, 'Active')
+    VALUES (?, ?, ?, ?, 'Active')
     `;
     
     
     const billValues = [
+        orderDate,
         totalAmount,
         customerName,
         paymentMethod

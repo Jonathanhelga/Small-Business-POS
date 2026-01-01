@@ -4,7 +4,6 @@ const container = document.getElementById('orderHistoryList');
 const emptyContainer = document.getElementById('NoOrderHistory');
 const containerItemsList = document.getElementById('billItemsList');
 containerItemsList.innerHTML = '';
-
 let isProcessing = false;
 const formatCurrency = (value) => new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -43,15 +42,18 @@ async function fetchOrderHistory(){
         }
 
         orderHistory.forEach(order => {
-            const orderDate = new Date(order.date_time).toLocaleDateString('en-US', {
+            const safeTimeString = order.date_time.replace(' ', 'T') + 'Z';
+            const dateObj = new Date(safeTimeString);
+            const options = {
                 year: 'numeric',
-                month: 'short',
+                month: 'short',  // e.g., "Jan", "Dec"
                 day: 'numeric',
-            });
+            };
+            const userFriendlyDate = new Intl.DateTimeFormat(undefined, options).format(dateObj);
             const div = document.createElement('div');
             div.className = 'order-card';
             div.innerHTML = `
-                <h3><b>${orderDate}</b></h3>
+                <h3><b>${userFriendlyDate}</b></h3>
                 <p><b>Bill ID:</b> ${order.bill_id}</p>
                 <p><b>Customer:</b> ${order.customer_name}</p>
               
@@ -115,22 +117,21 @@ export async function viewOrderDetails(billId, dateTime, totalAmount) {
         billTax: document.getElementById('billTax'),
         billGrandTotal: document.getElementById('billGrandTotal'),
     };
-      
     elements.invoiceNum.textContent = billId;
-    const date = new Date(dateTime);
-    const orderDate = date.toLocaleDateString('en-US', {
+    const safeTimeString = dateTime.replace(' ', 'T') + 'Z';
+    const dateObj = new Date(safeTimeString);
+    const optionDate = {
         year: 'numeric',
-        month: 'short',
+        month: 'short',  // e.g., "Jan", "Dec"
         day: 'numeric',
-    });
-    elements.billDate.textContent = orderDate;
-       
-    const orderTime = date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
+    };
+    const optionTime = {
+        hour: '2-digit', // e.g., "01", "13"
         minute: '2-digit',
-        second: '2-digit',
-    });
-    elements.billTime.textContent = orderTime;
+        hour12: true    // Use 24-hour format (change to true for AM/PM)
+    };
+    elements.billDate.textContent = new Intl.DateTimeFormat(undefined, optionDate).format(dateObj);
+    elements.billTime.textContent = new Intl.DateTimeFormat(undefined, optionTime).format(dateObj);
 
     let totalItems = Number(0);
     Itemsdata.forEach(item => {
