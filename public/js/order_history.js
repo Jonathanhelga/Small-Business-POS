@@ -16,7 +16,64 @@ const formatCurrencyPlain = (value) => new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
 }).format(value);
+const billID = (invoiceNumberElement, billid) => {
+    invoiceNumberElement.textContent = billid;
+}
+const billTimeDetail = (billDateElement, billTimeElement, dateTime) => {
+    const safeTimeString = dateTime.replace(' ', 'T') + 'Z';
+    const dateObj = new Date(safeTimeString);
+    const optionDate = {
+        year: 'numeric',
+        month: 'short',  // e.g., "Jan", "Dec"
+        day: 'numeric',
+    };
+    const optionTime = {
+        hour: '2-digit', // e.g., "01", "13"
+        minute: '2-digit',
+        hour12: true    // Use 24-hour format (change to true for AM/PM)
+    };
+    billDateElement.textContent = new Intl.DateTimeFormat(undefined, optionDate).format(dateObj);
+    billTimeElement.textContent = new Intl.DateTimeFormat(undefined, optionTime).format(dateObj);
+}
+const billItemsData = (containerItemList, Itemsdata) => {
+    let totalItems = Number(0);
+    Itemsdata.forEach(item => {
+        totalItems += Number(item.quantity);
+        const divItemsList = document.createElement('div');
+        divItemsList.className = 'bill-item';
+    
+        divItemsList.append((() => {
+            const div = document.createElement('div');
+            div.append(
+                createCell('item-name-cell', item.item_name), 
+                createCell('item-sku-cell', item.sku)   
+            );
+            return div;
+            })(),
+            createCell('qty-cell', item.quantity),
+            createCell('price-cell', formatCurrencyPlain(item.unit_price)),
+            createCell('total-cell', formatCurrencyPlain(item.subtotal))
+        );
 
+        containerItemList.append(divItemsList);
+    });
+    return totalItems;
+}
+const billTotalNSubtotal = (billTotalItemsElement, billSubtotal, totalItems, totalAmount) => {
+    billTotalItemsElement.textContent = totalItems;
+    billSubtotal.textContent = formatCurrency(totalAmount);
+}
+const billTaxCalculator = (billTaxElement, totalAmount) => {
+    let taxPercentage = parseFloat(document.getElementById('business-tax').textContent);
+    let tax = parseFloat(totalAmount * taxPercentage / 100);
+    billTaxElement.textContent = formatCurrency(tax);
+    return tax;
+}
+const billGrandTotal = (billGrandTotalElement, totalAmount, tax) => {
+     let grandTotal = Number(totalAmount) + Number(tax);
+     billGrandTotalElement.textContent = formatCurrency(grandTotal);
+
+}
 const createCell = (className, text) => {
     const div = document.createElement('div');
     div.className = className;
@@ -117,55 +174,16 @@ export async function viewOrderDetails(billId, dateTime, totalAmount) {
         billTax: document.getElementById('billTax'),
         billGrandTotal: document.getElementById('billGrandTotal'),
     };
-    elements.invoiceNum.textContent = billId;
-    const safeTimeString = dateTime.replace(' ', 'T') + 'Z';
-    const dateObj = new Date(safeTimeString);
-    const optionDate = {
-        year: 'numeric',
-        month: 'short',  // e.g., "Jan", "Dec"
-        day: 'numeric',
-    };
-    const optionTime = {
-        hour: '2-digit', // e.g., "01", "13"
-        minute: '2-digit',
-        hour12: true    // Use 24-hour format (change to true for AM/PM)
-    };
-    elements.billDate.textContent = new Intl.DateTimeFormat(undefined, optionDate).format(dateObj);
-    elements.billTime.textContent = new Intl.DateTimeFormat(undefined, optionTime).format(dateObj);
-
-    let totalItems = Number(0);
-    Itemsdata.forEach(item => {
-        totalItems += Number(item.quantity);
-        const divItemsList = document.createElement('div');
-        divItemsList.className = 'bill-item';
+    billID( elements.invoiceNum, billId);
+    billTimeDetail(elements.billDate, elements.billTime, dateTime);
+    let totalItems = billItemsData(containerItemsList, Itemsdata);
+    billTotalNSubtotal(elements.billTotalItems,  elements.billSubtotal, totalItems, totalAmount);
+    let tax = billTaxCalculator(elements.billTax, totalAmount);
+    billGrandTotal(elements.billGrandTotal, totalAmount, tax);
     
-        divItemsList.append((() => {
-            const div = document.createElement('div');
-            div.append(
-                createCell('item-name-cell', item.item_name), 
-                createCell('item-sku-cell', item.sku)   
-            );
-            return div;
-            })(),
-            createCell('qty-cell', item.quantity),
-            createCell('price-cell', formatCurrencyPlain(item.unit_price)),
-            createCell('total-cell', formatCurrencyPlain(item.subtotal))
-        );
-
-        containerItemsList.append(divItemsList);
-    });
-    
-    elements.billTotalItems.textContent = totalItems;
-    elements.billSubtotal.textContent = formatCurrency(totalAmount);
-
-    let tax = Number(0);
-    elements.billTax.textContent = formatCurrency(tax);
-
-    let grandTotal = Number(totalAmount) + Number(tax);
-    elements.billGrandTotal.textContent = formatCurrency(grandTotal);
     } catch (err) {
         console.error("Error loading order items:", err);
-          alert("Failed to load order details. Please try again.");
+        alert("Failed to load order details. Please try again.");
     }
 }
 export async function loadListOfOrderHistory(){
