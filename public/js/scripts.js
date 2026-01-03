@@ -21,24 +21,6 @@ function closePanel(panelID, panelBackDropID) {
   }
 }
 
-function addDoubleClickHint() {
-  const tableBody = document.getElementById('orderTableBody');
-  if (tableBody && !document.getElementById('doubleClickHint')) {
-    const hintDiv = document.createElement('div');
-    hintDiv.id = 'doubleClickHint';
-    hintDiv.style.cssText = `
-      font-size: 12px;
-      color: #666;
-      margin-top: 5px;
-      text-align: center;
-      font-style: italic;
-    `;
-    hintDiv.textContent = 'Double-click any row to edit quantity';
-    const orderTable = tableBody.closest('table');
-    orderTable.parentNode.insertBefore(hintDiv, orderTable.nextSibling);
-  }
-}
-
 let isSubmitting = false;
 document.getElementById('setupForm').addEventListener('submit', async function(e) {
   e.preventDefault();
@@ -125,11 +107,9 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('priceTotalOrdered').textContent = 'Rp. 0';
   setupAddButton();
 
-  // pass openOrderPanel as the handler for item clicks
-  initializeSearch(openOrderPanel);
+  initializeSearch(openOrderPanel);// pass openOrderPanel as the handler for item clicks
 
   startClock();
-  addDoubleClickHint();
 });
 
 document.getElementById('orderHistory').addEventListener('click', async  (e) => {

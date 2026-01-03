@@ -21,6 +21,7 @@ export async function checkAppState(){
         document.getElementById('shop-instagram').textContent = information.business_instagram || ''
         document.getElementById('shop-email').textContent = information.business_email || ''
         document.getElementById('bill-footer-message').textContent = information.footer_message || ''
+        wizard.classList.remove('active');
         container.classList.add('active');
     }
 }

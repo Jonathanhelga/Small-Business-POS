@@ -30,7 +30,6 @@ async function insertOrder(orderItems, customerName, paymentMethod){
     VALUES (?, ?, ?, ?, 'Active')
     `;
     
-    
     const billValues = [
         orderDate,
         totalAmount,
