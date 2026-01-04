@@ -1,7 +1,7 @@
 import { checkAppState } from './checkAppState.js';
 import { API_BASE } from './config.js';
 let currentStep = 1;
-const totalSteps = 3;
+const totalSteps = 4;
 export function changeStep(direction){
     document.getElementById(`step${currentStep}`).classList.remove('active');
     currentStep += direction;
@@ -20,7 +20,7 @@ export function changeStep(direction){
     document.getElementById(`step${currentStep}`).classList.add('active');
     document.getElementById('currentStepNum').innerText = currentStep;
 
-    const titles = ["Store Identity", "Financial Settings", "Printer Setup"];
+    const titles = ["Sign Up as a new user","Store Identity", "Financial Settings", "Printer Setup"];
     document.getElementById('stepTitle').innerText = titles[currentStep - 1];
 
     document.getElementById('prevBtn').style.visibility = (currentStep === 1) ? 'hidden' : 'visible';

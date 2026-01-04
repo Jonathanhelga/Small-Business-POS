@@ -179,7 +179,6 @@ document.getElementById('generateBarcode').addEventListener('click', async funct
   openBarcodeGenerator();
 });
 
-
 window.closePanel = closePanel;
 window.viewOrderDetails = viewOrderDetails;
 window.closeOrderHistory = closeOrderHistory;

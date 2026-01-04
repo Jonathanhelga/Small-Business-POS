@@ -173,7 +173,37 @@ input:focus, select:focus, textarea:focus {
     display: flex;
     justify-content: space-between;
 }
-
+.separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+    color: #888;
+}
+.separator::before, .separator::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1.2px solid #000000;
+}
+.separator span {
+    padding: 0 10px;
+    font-size: 0.9rem;
+}
+.btn-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: white;
+    border: 1px solid #ccc;
+    color: #333;
+    width: 100%; /* Ensures it matches other buttons */
+}
+.login-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.9rem;
+}
 .btn {
     padding: 10px 24px;
     border-radius: 6px;
@@ -181,6 +211,19 @@ input:focus, select:focus, textarea:focus {
     cursor: pointer;
     font-weight: 600;
     font-size: 1em;
+}
+.btn-google{
+    border: 2px solid black;
+}
+.btn-sign-up{
+    width: 100%;
+    background: #0091ff;
+    color: #cfcfcf;
+}
+.btn-sign-up:disabled {
+    background: #ccc;
+    color: #666;
+    cursor: not-allowed;
 }
 .btn-secondary {
     background: #e0e0e0;
