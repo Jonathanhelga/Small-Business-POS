@@ -858,19 +858,17 @@ label {
   
 .orderDetails {
     height: 100%;
-    overflow: hidden;
-    box-sizing: border-box;
     padding: 8px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background: radial-gradient(1200px 400px at 10% 10%, rgba(14,165,164,0.06), transparent), var(--bg); 
     margin-right: 1rem;
-    border: 1px solid black;
     border-radius: 12px;
+    overflow-y: auto;
 }
 
 .order-card {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap; 
     border: 2px solid #eee;
     border-radius: 20px;
     padding: 10px;
@@ -891,7 +889,7 @@ label {
     max-width: 500px;
     min-height: 80%;
     max-height: 80%;
-    background-color: white;
+    background-color: rgba(171, 239, 233, 0.721);
     margin: 0 auto;
     overflow-y: auto;
 }
