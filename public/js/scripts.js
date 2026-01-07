@@ -12,6 +12,56 @@ import { changeStep } from './setup_wizard.js';
 import { API_BASE } from './config.js';
 import { checkAppState } from "./checkAppState.js";
 checkAppState();
+
+function checkVerificationButton() {
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const pass = document.getElementById('pass').value.trim();
+    const buttonVerification = document.getElementById('btn-email-verification');
+    const buttonSignUp = document.getElementById('btn-sign-up');
+    if(buttonSignUp.classList.contains('active')){
+        buttonSignUp.classList.remove('active')
+        buttonVerification.classList.add('active')
+        button1.disabled = true;
+        button2.disabled = true;
+    }
+    if (username && email && pass){
+        buttonVerification.disabled = false;
+    }
+    else {
+        buttonVerification.disabled = true;
+    }
+}
+function checkSignInButton(){
+    const verification = document.getElementById('verification').value.trim();
+    const buttonSignUp = document.getElementById('btn-sign-up');
+    if(verification){
+        buttonSignUp.disabled = false;
+    }
+    else{
+      buttonSignUp.disabled = true;
+    }
+}
+document.addEventListener('DOMContentLoaded', function () {
+    const inputs = ['username', 'email', 'pass'];
+    inputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', checkVerificationButton);
+    });
+    checkVerificationButton();
+    document.getElementById('verification').addEventListener('input', checkSignInButton);
+})
+const buttonVerification = document.getElementById('btn-email-verification');
+buttonVerification.addEventListener('click', function(e){
+    buttonVerification.classList.remove('active');
+    buttonVerification.disabled = true;
+    const buttonSignUp = document.getElementById('btn-sign-up');
+    buttonSignUp.classList.add('active')
+    buttonSignUp.disabled = true;
+})
+
+
+
+
 function closePanel(panelID, panelBackDropID) {
   const panel = document.getElementById(panelID); 
   const backdrop = document.getElementById(panelBackDropID);

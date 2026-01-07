@@ -1,7 +1,6 @@
 import { API_BASE } from './config.js';
 let orderHistory = [];
-const container = document.getElementById('orderHistoryList');
-const emptyContainer = document.getElementById('NoOrderHistory');
+const container = document.getElementById('order-history-list');
 const containerItemsList = document.getElementById('billItemsList');
 containerItemsList.innerHTML = '';
 let isProcessing = false;
@@ -20,8 +19,7 @@ const billID = (invoiceNumberElement, billid) => {
     invoiceNumberElement.textContent = billid;
 }
 const billTimeDetail = (billDateElement, billTimeElement, dateTime) => {
-    const safeTimeString = dateTime.replace(' ', 'T') + 'Z';
-    const dateObj = new Date(safeTimeString);
+    const dateObj = new Date(dateTime);
     const optionDate = {
         year: 'numeric',
         month: 'short',  // e.g., "Jan", "Dec"
@@ -80,6 +78,7 @@ const createCell = (className, text) => {
     div.textContent = text;
     return div;
 }
+
 async function fetchOrderHistory(){
     try{
         const response = await fetch(`${API_BASE}/api/orderHistory/bills`);
@@ -92,25 +91,24 @@ async function fetchOrderHistory(){
         console.log(`success: ${data.success}`);
         const orderHistory = data.items || [];
         container.innerHTML = '';   
-        emptyContainer.innerHTML = '';
         if(orderHistory.length === 0){
-            emptyContainer.innerHTML = '<p>No past orders found.</p>';
+            container.innerHTML = '<p>No past orders found.</p>';
             return;
         }
 
         orderHistory.forEach(order => {
-            const safeTimeString = order.date_time.replace(' ', 'T') + 'Z';
-            const dateObj = new Date(safeTimeString);
+            const dateObj = new Date(order.date_time);
             const options = {
                 year: 'numeric',
                 month: 'short',  // e.g., "Jan", "Dec"
                 day: 'numeric',
             };
             const userFriendlyDate = new Intl.DateTimeFormat(undefined, options).format(dateObj);
+            console.log(userFriendlyDate);
+            
             const div = document.createElement('div');
             div.className = 'order-card';
             div.innerHTML = `
-                <h3><b>${userFriendlyDate}</b></h3>
                 <p><b>Bill ID:</b> ${order.bill_id}</p>
                 <p><b>Customer:</b> ${order.customer_name}</p>
               
@@ -140,8 +138,7 @@ async function fetchOrderHistory(){
         });
     }catch(err){
         console.error("Error loading order history:", err);
-        document.getElementById('orderHistoryList').innerHTML =
-        '<p style="color:red;">Failed to load order history.</p>';
+        document.getElementById('orderHistoryList').innerHTML = '<p style="color:red;">Failed to load order history.</p>';
     }
 }
 export async function viewOrderDetails(billId, dateTime, totalAmount) {
@@ -194,7 +191,7 @@ export async function loadListOfOrderHistory(){
             closeOrderHistory();
         }
     })
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
 }
 export function closeOrderHistory(){
     const modal = document.getElementById('orderHistoryModal');

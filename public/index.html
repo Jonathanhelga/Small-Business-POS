@@ -33,8 +33,15 @@
                         <label for="verification">📲Verification Code</label>
                         <input type="number" id="verification" placeholder="Check your email box">
                     </div>
-                    <div class="sign-up">
-                        <button class="btn btn-sign-up" disabled>E-Mail Verification</button>
+                    <div class="input-group">
+                        <div class="email-verification">
+                            <button class="btn btn-email-verification active" id="btn-email-verification" disabled>E-Mail Verification</button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div class="sign-up">
+                            <button class="btn btn-sign-up" id="btn-sign-up" disabled>Sign Up</button>
+                        </div>
                     </div>
                     <div class="separator">
                         <span>OR</span>
@@ -115,8 +122,10 @@
         </form>
     </div>
 
-    <template id="itemButtonTemplate">
-        <button class="itemButton">Item</button>
+    <template id="item-button-template">
+        <button class="c-item-button">
+            <span class="c-item-button__label"></span>
+        </button>
     </template>
     <template id="updateQuantityTemplate">
       <div class="item-card">
@@ -283,22 +292,16 @@
             </div>
         </div>
     </form>
-    <div id="orderHistoryModal" class="orderModal">
-        <div class="modal-title">
-            <h2 style="display:inline-block;">Order History</h2>
-            <span class="close-btn" onclick="closeOrderHistory()">&times;</span>
-        </div>
-          
-        <div class="modal-content">
-            <div class="modal-body">
-              <!-- Left side: list of orders -->
-              <div class="order-History-list">
-                <div id="orderHistoryList"></div>
-                <div id="NoOrderHistory"></div>
-              </div>
-              
-              <!-- Right side: bill preview -->
-              <div id="orderDetails">
+    <div id="orderHistoryModal" class="orderHistoryModal">
+        <div class="modal-box">
+            <div class="order-history-title">
+                <h2>Order History</h2>
+                <span class="close-btn" onclick="closeOrderHistory()">&times;</span>
+            </div>
+            <div class="order-history-content">
+                <div class="order-history-list" id="order-history-list">
+                </div>
+                <div id="orderDetails">
                 <div id="orderDetailsBill" class="bill-preview">
                     <div class="bill-preview" id="billPreview">
                         <!-- Bill Header -->
@@ -379,9 +382,9 @@
                         </div>
                     </div>
                 </div>
-              </div>
+                </div>
             </div>
-        </div>          
+        </div>       
     </div>
     
     <div id="updateQuantityModal" class="UpdateQuantityModal">
@@ -430,7 +433,6 @@
             </div>
         </div>
     </div>
-
 
     <div class="container" id="container">
         <!-- The left panel displays the details of the items that have been ordered by the customer -->
@@ -529,26 +531,8 @@ function formatRupiah(number) {
 }
 
 // Function to check and enable/disable Sign Up button
-function checkSignUpButton() {
-    const username = document.getElementById('username').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const pass = document.getElementById('pass').value.trim();
-    const btn = document.querySelector('.btn-sign-up');
-    
-    if (username && email && pass) {
-        btn.disabled = false;
-    } else {
-        btn.disabled = true;
-    }
-}
 
-// Add event listeners on page load
-document.addEventListener('DOMContentLoaded', () => {
-    const inputs = ['username', 'email', 'pass'];
-    inputs.forEach(id => {
-        document.getElementById(id).addEventListener('input', checkSignUpButton);
-    });
-    checkSignUpButton(); // Initial check
-});
+
+
 </script>
 </html>

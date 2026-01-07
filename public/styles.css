@@ -4,7 +4,7 @@
  * ====================================
  */
 
- :root {
+:root {
     /* Define CSS Variables for Theming/Consistency (from barcode template, moved to root) */
     --bg: #bddcf0;
     --card: linear-gradient(180deg, #ffffff 0%, #fbfbfd 100%);
@@ -42,7 +42,7 @@ body {
 select {
     height: 48px;
     padding: 0 12px;
-    font-size: 16px;
+    font-size: 1px;
     line-height: 1.2;
     box-sizing: border-box;
     -webkit-appearance: none;
@@ -59,7 +59,7 @@ select {
 
 /* Utility Classes */
 .display {
-    margin-top: 15px;
+    margin-top: 20px;
     display: flex;
     flex-direction: column; 
     justify-content: center; 
@@ -70,10 +70,10 @@ select {
 #date {
     font-style: italic;
     font-weight: bold;
-    font-size:1.5vw;
+    font-size:2vw;
 }
 #time{
-    font-size:2vw;
+    font-size:3vw;
 }
 /**
  * ====================================
@@ -82,7 +82,7 @@ select {
  */
 #setupWizardForm{
     display: none;
-    background-color: #6ea3c3f9;
+    background-color: rgba(110, 163, 195, 0.976);
     justify-content: center;
     align-items: center;
     height: 100vh;
@@ -96,7 +96,6 @@ select {
     font-family: 'Courier New', monospace;
     color:rgb(0, 255, 234);
     font-size: 8rem;
-    
 }
 .wizard-card {
    background: white;
@@ -212,10 +211,22 @@ input:focus, select:focus, textarea:focus {
     font-weight: 600;
     font-size: 1em;
 }
-.btn-google{
-    border: 2px solid black;
+.btn-email-verification{
+    display: none;
+    width: 100%;
+    background: #0091ff;
+    color: #cfcfcf;
+}
+.btn-email-verification:disabled{
+    background: #ccc;
+    color: #666;
+    cursor: not-allowed;
+}
+.btn-email-verification.active{
+    display: block;
 }
 .btn-sign-up{
+    display: none;
     width: 100%;
     background: #0091ff;
     color: #cfcfcf;
@@ -224,6 +235,12 @@ input:focus, select:focus, textarea:focus {
     background: #ccc;
     color: #666;
     cursor: not-allowed;
+}
+.btn-sign-up.active{
+    display: block;
+}
+.btn-google{
+    border: 2px solid black;
 }
 .btn-secondary {
     background: #e0e0e0;
@@ -493,7 +510,7 @@ th{
     justify-content: center;
 }
 
-.itemButton {
+.c-item-button {
     background-color: var(--bg-color, #04AA6D); /* Uses a CSS variable for color */
     border: none;
     border-radius: 10px;
@@ -511,7 +528,7 @@ th{
     word-wrap: break-word;
 }
 
-.itemButton:hover {
+.c-item-button:hover {
     background-color: #04aa6d58 !important;
     color: black;
 }
@@ -775,76 +792,40 @@ label {
  * ====================================
  */
 
-.orderModal {
-    display: none; /* hidden by default */
+
+.orderHistoryModal {
+    display: none;
+    justify-content:center;   
     position: fixed;
     inset: 0;
     z-index: 20;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0,0,0,0.5);
+    padding-top: 5vh;       
+    box-sizing: border-box;
 }
-  
-.modal-title {
+.modal-box {
+    width: 100%;
+    max-width: 900px;
+    max-height: 65vh;       
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    overflow: hidden;       
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    background: #fff;
+    box-sizing: border-box;
+}
+.order-history-title {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #fff;
-    border-bottom: 1px solid #ddd;
-    margin: 0 auto;
-    border-radius: 12px 12px 0 0;
     padding: 15px 20px;
-    position: sticky;
-    top: 2%;
+    border-bottom: 1px solid #ddd;
+    background: #fff;
+    position: relative;
     z-index: 2;
-    width: 90%;
-    max-width: 900px;
-}
-  
-.modal-content {
-    background-color: #fff;
-    margin: 0 auto;
-    padding: 9px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 900px;
-    max-height: 90vh;
-    overflow-y: auto;   /* scroll only inside modal */
-    display: flex;
-    flex-direction: column;
-}
-  
-.modal-body {
-    display: flex;
-    height: 100%;
-    overflow-y: hidden;
 }
 
-.order-History-list{
-    flex: 1.5;
-    padding: 20px;
-    border-right: 1px solid #ddd;
-}
-
-#orderHistoryList {
-    overflow-y: auto;   
-}
-#NoOrderHistory {
-    height: 100%;
-    display: flex;               
-    justify-content: center;
-    align-items: center;
-    font-size: 16px;
-    color: #777;
-    text-align: center;
-}
-
-#orderDetails {
-    flex: 2;
-    width: 400px;       
-    padding: 20px;
-    overflow-y: auto;   
-    background: #fdfdfd;
-}
-  
 .close-btn {
     float: right;
     font-size: 24px;
@@ -855,13 +836,54 @@ label {
 .close-btn:hover {
     color: rgb(0, 0, 0);
 }
+.order-history-content {
+    display: grid;
+    grid-template-columns: 40% 60%;  
+    gap: 12px;
+    padding: 12px;
+    box-sizing: border-box;
+    align-items: start;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+.order-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+    height: 100%;
+    overflow: auto;
+    padding-right: 8px;
+}
   
+.orderDetails {
+    height: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(1200px 400px at 10% 10%, rgba(14,165,164,0.06), transparent), var(--bg); 
+    margin-right: 1rem;
+    border: 1px solid black;
+    border-radius: 12px;
+}
+
 .order-card {
-    border: 1px solid #ddd;
+    border: 2px solid #eee;
     border-radius: 20px;
     padding: 10px;
-    margin-bottom: 10px;
-    background-color: #f9f9f9;
+    margin: 3px;
+    margin-bottom: 1rem;
+    background: #fafafa;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.order-card:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(83, 68, 50, 0.12);
+    border-color: rgba(0, 122, 255, 0.4); 
 }
   
 #orderDetailsBill {
@@ -1108,12 +1130,13 @@ label {
 .item-card {
   display: grid;
   grid-template-columns: 1.3fr 1fr 1fr auto; 
+  border: 2px solid #eee;
   align-items: stretch;
   background: #fff;
   border-radius: 16px;
   padding: 24px;
-  margin-bottom: 24px;
-  gap: 32px;
+  margin-bottom: 1rem;
+  gap: 10px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.06);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -1312,7 +1335,6 @@ label {
 .barcodeGeneratorModal {
     display: none;
     justify-content: center;    
-    align-items: flex-start;    
     position: fixed;
     inset: 0;
     z-index: 20;
@@ -1406,7 +1428,15 @@ label {
     margin-bottom: 1rem;
     border: 2px solid #eee;
     padding: 12px;
-    border-radius: 8px;
+    margin: 3px;
+    border-radius: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.barcode-card:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(83, 68, 50, 0.12);
+    border-color: rgba(0, 122, 255, 0.4); 
 }
 .barcode-header{
     flex: 1;

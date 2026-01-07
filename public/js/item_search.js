@@ -74,32 +74,22 @@ export function displayFilteredItems(filteredItems, onItemClick) {
 }
 
 function createItemButton(item, onItemClick) {
-    const template = document.getElementById('itemButtonTemplate');
-    let newButton;
+  const tpl = document.getElementById('item-button-template');
+  const clone = tpl.content.cloneNode(true);
+  const button = clone.querySelector('.c-item-button');
+  const label = clone.querySelector('.c-item-button__label');
 
-    if (template && template.content) {
-      const clone = template.content.cloneNode(true);
-      newButton = clone.querySelector('button') || clone.firstElementChild;
-      if (!newButton) newButton = document.createElement('button');
-    } else {
-      newButton = document.createElement('button');
-    }
+  label.textContent = item.item_name || 'Unnamed';
 
-    newButton.textContent = item.item_name || 'Unnamed';
-    newButton.classList.add('item-button');
-    if (item.button_color) {
-      newButton.style.setProperty('--bg-color', item.button_color);
-      newButton.style.backgroundColor = 'var(--bg-color)';
-    }
+  if (item.button_color) {
+    button.style.setProperty('--bg-color', item.button_color);
+  }
 
-    newButton.addEventListener('click', () => {
-      if (typeof onItemClick === 'function') {
-        onItemClick(item);
-      }
-    });
+  button.addEventListener('click', () => onItemClick?.(item));
 
-    return newButton;
+  return button;
 }
+
 
 let searchTimeout;
 function handleSearchInput(event, onItemClick) {
