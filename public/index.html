@@ -190,9 +190,11 @@
     <form id="addItemForm">
         <div id="newItemBackdrop">
           <div id="newItemPanel">
-            <h3>Add New Item</h3>
-      
-            <section>
+            <header class="c-modal__header">
+                <h3 class="c-modal__title">Add New Item</h3>
+                <button type="button" class="c-modal__close" aria-label="Close" data-modal-close="item-create-modal">&times;</button>
+            </header>
+            <div class="c-modal__body">
               <label for="tagsColor">Tag Color:</label>
               <select id="tagsColor" class="tags">
                 <option value="green">Green</option>
@@ -200,17 +202,13 @@
                 <option value="red">Red</option>
                 <option value="blue">Blue</option>
               </select>
-            </section>
       
-            <section>
               <label for="sku">SKU:</label>
               <input type="text" id="sku" placeholder="SKU" />
       
               <label for="itemName">Item Name:</label>
               <input type="text" id="itemName" placeholder="Item Name"/>
-            </section>
       
-            <section>
               <label for="tagsCategory">Category:</label>
               <select id="tagsCategory" class="tags">
                 <option value="Lighting">Lighting</option>
@@ -219,22 +217,16 @@
                 <option value="Outlets & Switches">Outlets & Switches</option>
                 <option value="Smart Home">Smart Home</option>
               </select>
-            </section>
       
-            <section>
               <label for="costPrice">Cost Price (IDR):</label>
               <input type="text" id="costPrice" placeholder="Cost Price (IDR)" oninput="formatRupiahInput(this)" />
       
               <label for="itemPrice">Selling Price (IDR):</label>
               <input type="text" id="itemPrice" placeholder="Selling Price (IDR)" oninput="formatRupiahInput(this)" />
-            </section>
       
-            <section>
               <label for="minimum_stock_level">Minimum Stock Level:</label>
               <input type="number" id="minimum_stock_level" placeholder="Minimum Stock Level" step="0.01" min="0">
-            </section>
       
-            <section>
               <label>Item Quantity & Unit:</label>
               <div class="quantity-unit-container">
                 <input type="number" id="itemQty" placeholder="Item Quantity" />
@@ -251,28 +243,40 @@
                   <option value="pack">Packs</option>
                 </select>
               </div>
-            </section>
       
-            <section>
               <label for="supplier_info">Supplier Info:</label>
               <input type="text" id="supplier_info" maxlength="255" placeholder="e.g., PT. FreshGoods Supplier">
-            </section>
       
-            <section>
               <label for="description">Description:</label>
               <textarea id="description" name="description" rows="5" placeholder="Write your description here..."></textarea>
-            </section>
-      
+            </div>  
             <div class="button-group">
-              <button type="submit">Add Item</button>
-              <button type="button" onclick="closePanel('addItemForm', 'newItemBackdrop')">Cancel</button>
+                <button type="submit" class="btn btn--primary">Add Item</button>
+                <button type="button" class="btn btn--danger"
+                        onclick="closePanel('addItemForm', 'newItemBackdrop')">
+                    Cancel
+                </button>
             </div>
           </div>
         </div>
     </form>
       
-    <form id="orderItemForm">
-        <div id="orderItemBackdrop">
+    <div id="storeFeaturesModal" class="storeFeaturesModal"> 
+        <div class="features-button">
+            <div class="features-button-title">
+                <h1>Features</h1>
+                <span class="close-btn" onclick="closeFeaturesModal()">&times;</span>
+            </div>
+            <div class="features-button-body">
+                <button id="updateItemInventory">Update Inventory</button>
+                <button id="">Item Information</button>
+                <button id="">KeyStats</button>
+                <button id="generateBarcode">Generate Barcode</button>
+            </div>
+        </div>
+    </div>
+    
+    <form id="orderItemForm" class="orderItemForm">
             <div id="orderPanel" class="hidden">
                 <div id="fixedDisplay">
                     <h1>Item Detail</h1>
@@ -290,8 +294,8 @@
                     </div>
                 </div>
             </div>
-        </div>
     </form>
+
     <div id="orderHistoryModal" class="orderHistoryModal">
         <div class="modal-box">
             <div class="order-history-title">
@@ -396,21 +400,6 @@
           
             <div class="quantity-modal-body">
                 <div id="itemList"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="storeFeaturesModal" class="storeFeaturesModal"> 
-        <div class="features-button">
-            <div class="features-button-title">
-                <h1>Features</h1>
-                <span class="close-btn" onclick="closeFeaturesModal()">&times;</span>
-            </div>
-            <div class="features-button-body">
-                <button id="updateItemInventory">Update Inventory</button>
-                <button id="">Item Information</button>
-                <button id="">KeyStats</button>
-                <button id="generateBarcode">Generate Barcode</button>
             </div>
         </div>
     </div>

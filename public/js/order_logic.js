@@ -21,12 +21,11 @@ function findItemByName(itemName) {
 }
 export function openOrderPanel(item) {
     const orderPanel = document.getElementById('orderItemForm');
-    const backdrop = document.getElementById('orderItemBackdrop');
     if (!orderPanel) return;
 
     document.getElementById('skuDisplay').textContent = item.sku ?? '';
     document.getElementById('itemNameDetail').textContent = item.item_name ?? '';
-    document.getElementById('itemPriceSell').textContent = " " + (item.selling_price ?? '');
+    document.getElementById('itemPriceSell').textContent = " " + formatRupiah(item.selling_price ?? '');
     document.getElementById('itemStock').textContent = item.item_quantity ?? '';
 
     let matchedItem = orderItems.find(o => o.name === item.item_name);
@@ -37,12 +36,10 @@ export function openOrderPanel(item) {
     }
 
     orderPanel.classList.add('active');
-    backdrop.classList.add('active');
 
-    backdrop.addEventListener('click', function (event) {
-      if (event.target === backdrop) {
+    orderPanel.addEventListener('click', function (event) {
+      if (event.target === orderPanel) {
           orderPanel.classList.remove('active');
-          backdrop.classList.remove('active');
       }
   });
 }

@@ -62,12 +62,10 @@ buttonVerification.addEventListener('click', function(e){
 
 
 
-function closePanel(panelID, panelBackDropID) {
+function closePanel(panelID) {
   const panel = document.getElementById(panelID); 
-  const backdrop = document.getElementById(panelBackDropID);
   if (panel) {
     panel.classList.remove('active');
-    backdrop.classList.remove('active');
   }
 }
 
@@ -140,16 +138,25 @@ document.getElementById('addItemForm').addEventListener('submit', async function
 document.getElementById('orderItemForm').addEventListener('submit', function (e) {
   e.preventDefault();
   if(parseFloat(document.getElementById('quantityInput').value) > parseFloat(document.getElementById('itemStock').textContent)){
-    alert("Not enough stock.");
-    closePanel('orderItemForm', 'orderItemBackdrop');
-    return;
+      alert("Not enough stock.");
+      closePanel('orderItemForm');
+      return;
   }
+  if(document.getElementById('quantityInput').value <= 0){
+      alert("Can't order 0 item");
+      closePanel('orderItemForm');
+      return;
+  }
+  const unformatRupiah = (value) => {
+    return Number(value.replace(/\./g, '').replace(',', '.'));
+  }
+  
   addItemToOrder(
     document.getElementById('itemNameDetail').textContent,
-    parseFloat(document.getElementById('itemPriceSell').textContent),
+    unformatRupiah(document.getElementById('itemPriceSell').textContent),
     parseFloat(document.getElementById('quantityInput').value)
   );
-  closePanel('orderItemForm', 'orderItemBackdrop');
+  closePanel('orderItemForm');
 });
 
 document.addEventListener('DOMContentLoaded', function () {

@@ -153,7 +153,7 @@ export async function loadListItemQuantity(){
             closeListItem();
         }
     })
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
 }
 
 async function closeListItem(){
