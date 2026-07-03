@@ -1,17 +1,47 @@
 import { submitItemData, auth, getCachedUserProfile } from "./firebase";
 import { getCurrencySymbol } from './formatCurrency';
-import { addSingleItem } from "./search_item";
+import { addSingleItem, allItems } from "./search_item";
 import { toggleModal } from './modal-handler';
 import { showToast } from "./toast";
 
+function generateNextSku(items) {
+    const numbers = items
+        .map(i => /^SKU-(\d+)$/.exec(i.sku))
+        .filter(Boolean)
+        .map(m => parseInt(m[1], 10));
+    const next = numbers.length ? Math.max(...numbers) + 1 : 1;
+    return `SKU-${String(next).padStart(5, '0')}`;
+}
+
 export function initInventoryForm() {
+    const skuAutoCheckbox = document.getElementById('sku-auto-checkbox');
+    const skuInput = document.getElementById('sku');
+
     document.getElementById('js-item-create-open').addEventListener('click', () => {
         const currency = getCachedUserProfile()?.currency || 'IDR';
         const symbol = getCurrencySymbol(currency);
         document.getElementById('c-cost-currency').textContent = symbol;
         document.getElementById('c-sell-currency').textContent = symbol;
+
+        if (skuAutoCheckbox.checked) {
+            skuInput.value = generateNextSku(allItems);
+            skuInput.readOnly = true;
+        }
+
         toggleModal('item-create-modal');
     });
+
+    skuAutoCheckbox.addEventListener('change', () => {
+        if (skuAutoCheckbox.checked) {
+            skuInput.value = generateNextSku(allItems);
+            skuInput.readOnly = true;
+        } else {
+            skuInput.value = '';
+            skuInput.readOnly = false;
+            skuInput.focus();
+        }
+    });
+
     const form = document.getElementById('js-item-create-form');
     const submitBtn = document.getElementById('js-add-new-item');
     if (!form || !submitBtn) return;
@@ -61,6 +91,8 @@ export function initInventoryForm() {
             showToast('Inventory updated successfully.');
 
             form.reset();
+            skuAutoCheckbox.checked = false;
+            skuInput.readOnly = false;
             document.querySelector('[data-modal-close="item-create-modal"]')?.click();
         } catch (err) {
             console.error("Submission Error:", err);

@@ -172,6 +172,11 @@ body {
     color: var(--clr-text-primary);
 }
 
+.c-field__input:read-only {
+    background-color: var(--clr-surface-alt);
+    cursor: default;
+}
+
 .c-field__select {
     font-size: 1rem;
     appearance: none;
