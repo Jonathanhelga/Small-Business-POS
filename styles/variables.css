@@ -153,6 +153,12 @@ body {
     font-size: var(--font-size);
 }
 
+.c-required {
+    color: var(--clr-danger);
+    font-weight: 700;
+    margin-left: 2px;
+}
+
 .c-field__input,
 .c-field__select,
 .c-field__textarea {
