@@ -8,7 +8,7 @@
     width: 100%;
     max-width: 880px;
     max-height: 90vh;
-    overflow-y: auto;
+    overflow: hidden;
     border-radius: var(--radius);
     background-color: var(--clr-modal-panel);
     box-shadow: var(--shadow);
@@ -27,6 +27,7 @@
 
 #c-modal-item-create .c-modal__body {
     padding: 2rem 2.25rem 1.5rem;
+    overflow-y: auto;
 }
 
 .c-form-grid {
@@ -102,8 +103,7 @@
 .c-qty-unit select { flex: 1 1 0; } /* ~33% width */
 
 #c-modal-item-create .c-modal__footer {
-    margin-top: 0.5rem;
-    padding: 1.25rem 0 0.25rem;
+    padding: 1.25rem 2.25rem;
     border-top: 1px solid var(--clr-border);
 }
 #c-modal-item-create .c-actions {

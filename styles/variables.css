@@ -159,6 +159,8 @@ body {
     gap: var(--gap);
 }
 
+/* .c-field__input-group-flex .c-field__input { flex: 1; } */
+
 .c-required {
     color: var(--clr-danger);
     font-weight: 700;
@@ -183,20 +185,34 @@ body {
     cursor: default;
 }
 
+.c-field__row--sku {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
 .c-theme-toggle--inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
     margin: 0;
-    padding: 0;
-    flex-shrink: 0;
-    gap: 4px;
+    border-radius: var(--radius);
 }
 
 .c-theme-toggle--inline .c-theme-toggle__label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     margin: 0;
+    white-space: nowrap;
+    color: var(--clr-text-secondary);
+    font-weight: 500;
 }
 
 .c-theme-toggle--inline .c-theme-toggle__switch {
     margin: 0;
+    display: flex;
+    align-items: center;
 }
 
 .c-field__select {

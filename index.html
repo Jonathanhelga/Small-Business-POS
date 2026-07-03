@@ -337,6 +337,21 @@
           <div class="c-modal__body">
             <form class="c-modal__form c-form-grid" id="js-item-create-form">
                 <div class="c-field c-field--full">
+                  <label class="c-field__label" for="sku">SKU <span class="c-required">*</span></label>
+                  <div class="c-field__row--sku">
+                    <input class="c-field__input" type="text" id="sku" placeholder="SKU" />
+                    <label class="c-theme-toggle c-theme-toggle--inline" id="js-sku-auto-toggle">
+                      <span class="c-theme-toggle__label">Auto Generate SKU</span>
+                      <span class="c-theme-toggle__switch">
+                        <input type="checkbox" id="sku-auto-checkbox">
+                        <span class="c-theme-toggle__track">
+                          <span class="c-theme-toggle__knob"></span>
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+                <div class="c-field">
                   <label class="c-field__label" for="tag-color">Button Theme</label>
                   <select id="tag-color" class="c-field__select">
                     <option value="primary">Muted Cobalt</option>
@@ -349,21 +364,6 @@
                   </select>
                 </div>
                 <div class="c-field">
-                  <label class="c-field__label" for="sku">SKU <span class="c-required">*</span></label>
-                  <div class="c-field__input-group-flex">
-                    <input class="c-field__input" type="text" id="sku" placeholder="SKU" />
-                    <label class="c-theme-toggle c-theme-toggle--inline" id="js-sku-auto-toggle">
-                      <span class="c-theme-toggle__label">Generate</span>
-                      <span class="c-theme-toggle__switch">
-                        <input type="checkbox" id="sku-auto-checkbox">
-                        <span class="c-theme-toggle__track">
-                          <span class="c-theme-toggle__knob"></span>
-                        </span>
-                      </span>
-                    </label>
-                  </div>
-                </div>
-                <div class="c-field c-field">
                   <label class="c-field__label" for="item-name">Item Name <span class="c-required">*</span></label>
                   <input class="c-field__input" type="text" id="item-name" placeholder="Item Name" />
                 </div>
@@ -411,14 +411,14 @@
                   <label class="c-field__label" for="description">Description</label>
                   <textarea class="c-field__textarea" id="js-description" name="description" rows="5" placeholder="Write your description here..."></textarea>
                 </div>
-                <footer class="c-modal__footer c-field--full">
-                  <div class="c-actions">
-                    <button type="submit" class="btn" id="js-add-new-item" >Add Item</button>
-                    <button type="button" class="btn" id="js-reset-new-item" data-modal-close="item-create-modal">Reset</button>
-                  </div>
-                </footer>
             </form>
           </div>
+          <footer class="c-modal__footer">
+            <div class="c-actions">
+              <button type="submit" class="btn" id="js-add-new-item" form="js-item-create-form">Add Item</button>
+              <button type="button" class="btn" id="js-reset-new-item" data-modal-close="item-create-modal">Reset</button>
+            </div>
+          </footer>
         </div>
     </div>
 
