@@ -153,11 +153,10 @@ body {
     font-size: var(--font-size);
 }
 
-.c-field__label-group {
+.c-field__input-group-flex {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
+    gap: var(--gap);
 }
 
 .c-required {
@@ -186,10 +185,17 @@ body {
 
 .c-theme-toggle--inline {
     margin: 0;
+    padding: 0;
+    flex-shrink: 0;
+    gap: 4px;
 }
 
 .c-theme-toggle--inline .c-theme-toggle__label {
     font-size: 0.85rem;
+    margin: 0;
+}
+
+.c-theme-toggle--inline .c-theme-toggle__switch {
     margin: 0;
 }
 
