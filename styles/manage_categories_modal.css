@@ -11,7 +11,7 @@
 #c-modal-manage-categories {
     width: 100%;
     max-width: 520px;
-    max-height: 85vh;
+    max-height: 70vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;

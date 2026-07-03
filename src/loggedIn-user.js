@@ -12,9 +12,7 @@ export async function renderLoggedInState(user) {
         document.getElementById('setup-wizard').classList.add('is-hidden');
         document.getElementById('pos-app').classList.add('is-active');
         initInventoryForm();
-        // Restore the saved cart only after inventory has loaded, so each line can
-        // be reconciled against live stock. loadAllItems() stays un-awaited to keep
-        // the rest of init non-blocking.
+        // Restore the saved cart only after inventory has loaded, so each line can be reconciled against live stock. 
         loadAllItems().then(restoreOrderFromStorage);
         initializeSearch();
         initSort();

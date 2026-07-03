@@ -16,18 +16,16 @@ let orderedItems = [];
 let selectedRowIndex = -1;
 let taxRate = 0;
 
-export function getOrderedItems(){
-    return orderedItems;
-}
+export function getOrderedItems(){ return orderedItems; }
+
 export function setTaxRate(rate) {
     taxRate = parseFloat(rate) || 0;
     updateTotals();
 }
+
 export function getTaxRate() { return taxRate; }
 
-function currentCurrency() {
-    return getCachedUserProfile()?.currency || 'IDR';
-}
+function currentCurrency() { return getCachedUserProfile()?.currency || 'IDR'; }
 
 export function openOrderItemModal(itemID) {
     const item = allItems.find(item => item.id === itemID); 
@@ -204,7 +202,7 @@ function removeSelectedItem(){
     const removeBtn = document.getElementById('js-order-remove');
     if (removeBtn) removeBtn.disabled = true;
 }
-async function resetOrderTable() {     // ← add `async`                                                                                                              
+async function resetOrderTable() {                                                                                                            
     const ok = await showConfirm({                 
         title: 'Reset order?',                                                                                                                                   
         message: 'This will clear all items in the current order.',                                                                                              
@@ -217,8 +215,7 @@ async function resetOrderTable() {     // ← add `async`
     fullRender();
     updateTotals();
     persistOrder();
-  }
-
+}
 
 export function clearOrderTable(){
     orderedItems = [];
@@ -228,9 +225,7 @@ export function clearOrderTable(){
     persistOrder();
 }
 
-// The cart is autosaved to localStorage so an accidental reload or tab close
-// does not wipe an in-progress order. We store the orderedItems array (the data),
-
+// The cart is autosaved to localStorage so an accidental reload or tab close does not wipe an in-progress order. We store the orderedItems array (the data),
 function storageKey(){
     const uid = auth.currentUser?.uid;
     return uid ? `pos-order-draft-${uid}` : null;
@@ -280,8 +275,7 @@ export function restoreOrderFromStorage(){
         }
         const quantity = Math.min(line.quantity, live.stockLevel);
         if(quantity !== line.quantity) adjusted = true;
-        // Refresh name/price/cost from the live item so the cart reflects current
-        // inventory (and scanned lines saved without costPrice get repaired).
+        // Refresh name/price/cost from the live item so the cart reflects current inventory (and scanned lines saved without costPrice get repaired).
         reconciled.push({
             id: live.id,
             name: live.itemName,
@@ -297,16 +291,11 @@ export function restoreOrderFromStorage(){
     updateTotals();
     persistOrder();
 
-    if(reconciled.length === 0){
-        if(adjusted) showToast('Your saved order items are no longer available.', 'info');
-        return;
-    }
-    if(adjusted){
-        showToast('Restored your order; some items were adjusted to current stock.', 'info');
-    } else {
-        showToast('Restored your previous order.');
-    }
+    if(reconciled.length === 0){ if(adjusted) showToast('Your saved order items are no longer available.', 'info'); return; }
+    if(adjusted){ showToast('Restored your order. Some items were adjusted to current stock.', 'info');} 
+    else { showToast('Restored your previous order.'); }
 }
+
 function updateTotals(){
     let subtotal = 0;
     let totalQty = 0;
