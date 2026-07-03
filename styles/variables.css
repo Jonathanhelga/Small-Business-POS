@@ -153,6 +153,13 @@ body {
     font-size: var(--font-size);
 }
 
+.c-field__label-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
 .c-required {
     color: var(--clr-danger);
     font-weight: 700;
@@ -175,6 +182,15 @@ body {
 .c-field__input:read-only {
     background-color: var(--clr-surface-alt);
     cursor: default;
+}
+
+.c-theme-toggle--inline {
+    margin: 0;
+}
+
+.c-theme-toggle--inline .c-theme-toggle__label {
+    font-size: 0.85rem;
+    margin: 0;
 }
 
 .c-field__select {

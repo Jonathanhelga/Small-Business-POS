@@ -348,19 +348,19 @@
                     <option value="yellow">Yellow Butter</option>
                   </select>
                 </div>
-                <div class="c-field c-field--full">
-                  <label class="c-theme-toggle" id="js-sku-auto-toggle">
-                    <span class="c-theme-toggle__label">Auto-generate SKU</span>
-                    <span class="c-theme-toggle__switch">
-                      <input type="checkbox" id="sku-auto-checkbox">
-                      <span class="c-theme-toggle__track">
-                        <span class="c-theme-toggle__knob"></span>
-                      </span>
-                    </span>
-                  </label>
-                </div>
                 <div class="c-field">
-                  <label class="c-field__label" for="sku">SKU <span class="c-required">*</span></label>
+                  <div class="c-field__label-group">
+                    <label class="c-field__label" for="sku">SKU <span class="c-required">*</span></label>
+                    <label class="c-theme-toggle c-theme-toggle--inline" id="js-sku-auto-toggle">
+                      <span class="c-theme-toggle__label">Generate</span>
+                      <span class="c-theme-toggle__switch">
+                        <input type="checkbox" id="sku-auto-checkbox">
+                        <span class="c-theme-toggle__track">
+                          <span class="c-theme-toggle__knob"></span>
+                        </span>
+                      </span>
+                    </label>
+                  </div>
                   <input class="c-field__input" type="text" id="sku" placeholder="SKU" />
                 </div>
                 <div class="c-field c-field">
