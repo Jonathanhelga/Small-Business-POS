@@ -224,12 +224,9 @@ function readCardEntries() {
     const usedIds = {};
     for (const card of container.querySelectorAll('.c-checkout__field-card')) {
         const type = card.dataset.fieldType;
-        // Locked (re-attached) cards carry their label/id on the dataset; new
-        // cards derive both from the editable label input.
+        // Locked (re-attached) cards carry their label/id on the dataset; new cards derive both from the editable label input.
         const presetLabel = card.dataset.fieldLabel;
-        const label = presetLabel !== undefined
-            ? presetLabel
-            : (card.querySelector('.c-checkout__field-label')?.value || '').trim();
+        const label = presetLabel !== undefined ? presetLabel : (card.querySelector('.c-checkout__field-label')?.value || '').trim();
         const value = readCardValue(card, type);
         if (!label || !value) continue;
 

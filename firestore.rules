@@ -16,6 +16,11 @@ service cloud.firestore {
         allow read, create: if request.auth != null &&
           request.auth.uid == get(/databases/$(database)/documents/inventory/$(docId)).data.ownerId;
       }
+
+      match /metaUpdates/{updateId} {
+        allow read, create: if request.auth != null &&
+          request.auth.uid == get(/databases/$(database)/documents/inventory/$(docId)).data.ownerId;
+      }
     }
     
     match /orders/{docId} {

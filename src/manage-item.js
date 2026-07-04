@@ -1,5 +1,5 @@
-import { updateItemData, deleteInventoryItem, getCachedUserProfile } from './firebase';
-import { getCurrencySymbol } from './formatCurrency';
+import { updateItemData, deleteInventoryItem, getCachedUserProfile, addMetaUpdateHistory, fetchMetaHistory } from './firebase';
+import { getCurrencySymbol, formatCurrency } from './formatCurrency';
 import { toggleModal } from './modal-handler';
 import { allItems, loadAllItems, updateLocalItem, removeLocalItem, refreshGrid } from './search_item';
 import { createSelection } from './selection';
@@ -14,6 +14,12 @@ let filteredItems  = [];
 const selection    = createSelection();
 let selectedTheme  = 'primary';
 let selectedCategories = new Set();
+
+// Change-history paging state (mirrors the stock-update history in the
+// inventory-update modal).
+const HISTORY_PAGE = 5;
+let historyLastDoc = null;
+let historyItemId  = null;
 
 const TAG_SWATCH = {
     primary:    '#4E7397',
@@ -213,9 +219,51 @@ function populateDetail(item) {
     setActiveTheme(item.tagColor || 'primary');
 
     clearFeedback();
+
+    historyLastDoc = null;
+    historyItemId  = item.id;
+    loadMetaHistory(item.id, false);
 }
 
-//  Save edits 
+//  Change diffing
+
+function themeName(token) {
+    return (THEMES.find(t => t.token === token) || {}).name || token || '—';
+}
+
+function fmtCategories(list) {
+    const arr = Array.isArray(list) ? [...list] : [];
+    return arr.length ? arr.sort().join(', ') : '(none)';
+}
+
+// Each field knows its human label and how to render a value as display text.
+// Equality is decided by comparing the two display strings, so cosmetic
+// differences (category order, missing value) never log a spurious change.
+function historyFieldSpecs(currencyCode) {
+    const symbol = getCurrencySymbol(currencyCode);
+    const money  = v => `${symbol}${formatCurrency(Number(v ?? 0), currencyCode)}`;
+    return [
+        { key: 'costPrice',     label: 'Cost price',    format: money },
+        { key: 'sellPrice',     label: 'Sell price',    format: money },
+        { key: 'minStockLevel', label: 'Minimum stock', format: v => `${v ?? 0}` },
+        { key: 'supplier',      label: 'Supplier',      format: v => (v && String(v).trim()) ? String(v).trim() : '(none)' },
+        { key: 'categories',    label: 'Categories',    format: fmtCategories },
+        { key: 'tagColor',      label: 'Theme',         format: v => themeName(v) },
+    ];
+}
+
+// Compare the item's previous values against the newly-saved fields and return
+// an array of { field, label, from, to } for only the fields that changed.
+function computeChanges(oldItem, newFields, currencyCode) {
+    return historyFieldSpecs(currencyCode).reduce((changes, spec) => {
+        const from = spec.format(oldItem[spec.key]);
+        const to   = spec.format(newFields[spec.key]);
+        if (from !== to) changes.push({ field: spec.key, label: spec.label, from, to });
+        return changes;
+    }, []);
+}
+
+//  Save edits
 
 async function handleSave() {
     const item = selection.get();
@@ -243,6 +291,11 @@ async function handleSave() {
 
     const fields = { costPrice, sellPrice, minStockLevel, supplier, categories, tagColor };
 
+    // Diff against the item's current (pre-save) values BEFORE we mutate `item`
+    // below, so the history captures exactly what this save changed.
+    const currencyCode = getCachedUserProfile()?.currency || 'IDR';
+    const changes = computeChanges(item, fields, currencyCode);
+
     const btn = document.getElementById('mi-save-btn');
     btn.disabled    = true;
     btn.textContent = 'Saving...';
@@ -251,6 +304,16 @@ async function handleSave() {
         await updateItemData(item.id, fields);
         updateLocalItem(item.id, fields);
         Object.assign(item, fields);
+
+        // Log a history entry only when something actually changed.
+        if (changes.length > 0) {
+            try {
+                await addMetaUpdateHistory(item.id, changes);
+                loadMetaHistory(item.id, false);
+            } catch (e) {
+                console.error('History write failed:', e);
+            }
+        }
 
         // Rebuild the POS grid from the now-updated in-memory items so the
         // button reflects the new colour (and re-sorts) without a page reload.
@@ -324,7 +387,68 @@ function clearFeedback() {
     el.className   = 'mi-feedback';
 }
 
-//  Open / load 
+//  Change history
+
+async function loadMetaHistory(itemId, append) {
+    const { docs, records } = await fetchMetaHistory(itemId, HISTORY_PAGE, append ? historyLastDoc : null);
+    if (!append) historyLastDoc = null;
+    if (docs.length > 0) historyLastDoc = docs[docs.length - 1];
+
+    const moreBtn = document.getElementById('mi-history-more');
+    moreBtn.classList.toggle('is-hidden', docs.length < HISTORY_PAGE);
+
+    renderMetaHistory(records, append);
+}
+
+function renderMetaHistory(records, append) {
+    const list = document.getElementById('mi-history-list');
+    if (!append) list.replaceChildren();
+
+    if (records.length === 0 && !append) {
+        const empty = document.createElement('p');
+        empty.className = 'mi-history__empty';
+        empty.textContent = 'No changes yet.';
+        list.appendChild(empty);
+        return;
+    }
+
+    const frag = document.createDocumentFragment();
+    records.forEach(r => {
+        const row = document.createElement('div');
+        row.className = 'mi-history__row';
+
+        const ts = document.createElement('span');
+        ts.className = 'mi-history__ts';
+        ts.textContent = r.timestamp
+            ? r.timestamp.toDate().toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+            : '—';
+        row.appendChild(ts);
+
+        const changes = document.createElement('div');
+        changes.className = 'mi-history__changes';
+        (r.changes ?? []).forEach(c => {
+            const line = document.createElement('div');
+            line.className = 'mi-history__change';
+
+            const label = document.createElement('span');
+            label.className = 'mi-history__field';
+            label.textContent = c.label;
+
+            const delta = document.createElement('span');
+            delta.className = 'mi-history__delta';
+            delta.textContent = `${c.from} → ${c.to}`;
+
+            line.append(label, delta);
+            changes.appendChild(line);
+        });
+        row.appendChild(changes);
+
+        frag.appendChild(row);
+    });
+    list.appendChild(frag);
+}
+
+//  Open / load
 
 async function openManageItem(user) {
     if (!user) return;
@@ -373,6 +497,10 @@ export function initManageItem(user) {
 
     document.getElementById('mi-save-btn').addEventListener('click', handleSave);
     document.getElementById('mi-delete-btn').addEventListener('click', handleDelete);
+
+    document.getElementById('mi-history-more').addEventListener('click', () => {
+        if (historyItemId) loadMetaHistory(historyItemId, true);
+    });
 
     attachListKeyNav({
         scope:       document.getElementById('manage-item-modal'),

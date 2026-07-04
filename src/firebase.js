@@ -85,13 +85,8 @@ export async function fetchInventory(uid) {
     const q = query(
         collection(db, "inventory"),
         where("ownerId", "==", uid),
-        orderBy("lastUpdated")
+        orderBy("createdAt", "desc")
     );
-    //     orderBy("createdAt", "asc") — ascending, oldest → newest:
-
-    // A — 2026-05-01 09:00
-    // B — 2026-05-05 14:30
-    // C — 2026-05-07 08:15
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 }
@@ -226,6 +221,26 @@ export async function fetchStockHistory(itemId, pageSize, lastDoc = null) {
     return { docs: snap.docs, records: snap.docs.map(d => ({ id: d.id, ...d.data() })) };
 }
 
+// Log an edit to an item's metadata (prices, min stock, supplier, categories,
+// theme). `changes` is an array of { field, label, from, to } describing only
+// the fields that actually changed. Mirrors addStockUpdateHistory, but for the
+// Manage Items modal rather than the stock-update flow.
+export async function addMetaUpdateHistory(itemId, changes) {
+    const ref = collection(db, 'inventory', itemId, 'metaUpdates');
+    await addDoc(ref, { changes, timestamp: serverTimestamp() });
+}
+
+export async function fetchMetaHistory(itemId, pageSize, lastDoc = null) {
+    let q = query(
+        collection(db, 'inventory', itemId, 'metaUpdates'),
+        orderBy('timestamp', 'desc'),
+        limit(pageSize)
+    );
+    if (lastDoc) q = query(q, startAfter(lastDoc));
+    const snap = await getDocs(q);
+    return { docs: snap.docs, records: snap.docs.map(d => ({ id: d.id, ...d.data() })) };
+}
+
 // Update editable metadata on an inventory item (prices, supplier, min stock,
 // tag color). Stock level is intentionally NOT touched here — that flows through
 // the inventory-update modal / syncStockToFirestore.
@@ -264,4 +279,4 @@ export async function deleteOrder(orderId) {
 
 export async function updateAdminPinHash(uid, hashHex) {
     await setDoc(doc(db, 'users', uid), { adminPinHash: hashHex }, { merge: true });
-}
+} 

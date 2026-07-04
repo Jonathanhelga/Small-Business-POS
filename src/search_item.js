@@ -52,21 +52,6 @@ export async function loadAllItems() {
         const user = auth.currentUser;
         if (!user) return;
         allItems = await fetchInventory(user.uid);
-
-        // TEMP: inject mock items to stress-test grid overflow — revert this block when done
-        // const mockColors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'gray'];
-        // for (let i = 1; i <= 60; i++) {
-        //     allItems.push({
-        //         id: `mock-${i}`,
-        //         itemName: `Mock Item ${i}`,
-        //         sku: `MOCK-${String(i).padStart(3, '0')}`,
-        //         sellPrice: 10000,
-        //         stockLevel: 99,
-        //         tagColor: mockColors[i % mockColors.length],
-        //     });
-        // }
-        // END TEMP
-
         refreshGrid();
     }
     catch (error) { console.error("Error pulling data:", error); }
