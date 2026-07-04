@@ -335,6 +335,10 @@
             <button type="button" class="c-modal__close" aria-label="Close" data-modal-close="item-create-modal">&times;</button>
           </header>
           <div class="c-modal__body">
+            <div class="c-added" id="js-added-panel" hidden>
+              <span class="c-added__count" id="js-added-count"></span>
+              <ul class="c-added__list" id="js-added-list" aria-live="polite"></ul>
+            </div>
             <form class="c-modal__form c-form-grid" id="js-item-create-form">
                 <div class="c-field c-field--full">
                   <label class="c-field__label" for="sku">SKU <span class="c-required">*</span></label>
@@ -416,7 +420,7 @@
           <footer class="c-modal__footer">
             <div class="c-actions">
               <button type="submit" class="btn" id="js-add-new-item" form="js-item-create-form">Add Item</button>
-              <button type="button" class="btn" id="js-reset-new-item" data-modal-close="item-create-modal">Reset</button>
+              <button type="button" class="btn" id="js-reset-new-item" data-modal-close="item-create-modal">Done</button>
             </div>
           </footer>
         </div>

@@ -335,7 +335,6 @@ async function openManageItem(user) {
     document.getElementById('mi-delete-btn').disabled = true;
     document.getElementById('mi-placeholder').classList.remove('is-hidden');
     document.getElementById('mi-search').value = '';
-    console.log("open Manage Item");
     
 
     // Set currency symbol from user profile
