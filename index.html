@@ -468,8 +468,30 @@
               <button id="manage-categories-open" class="btn" type="button">Manage Categories</button>
               <button id="barcode-generator-open" class="btn" type="button">Generate Barcode</button>
               <button id="sales-insights-open" class="btn" type="button">Sales Insights</button>
+              <button id="export-data-open" class="btn" type="button">Export Data</button>
               <button id="admin-pin-open" class="btn" type="button">Set up Admin PIN</button>
               <!-- <button id="item-info-open" class="btn" type="button" disabled>Item Information</button> -->
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <div id="export-data-modal" class="c-modal c-modal--center is-hidden">
+        <div class="c-modal__panel" id="c-modal-export">
+          <header class="c-modal__header">
+            <h2 class="c-modal__title">Export Data</h2>
+            <button type="button" class="c-modal__close" aria-label="Close" data-modal-close="export-data-modal">&times;</button>
+          </header>
+          <div class="c-modal__body">
+            <p class="c-export__desc">Download all your business data as a single Excel workbook (.xlsx). Opens in Excel, Numbers, and Google Sheets.</p>
+            <ul class="c-export__sheets">
+              <li>Summary <small>— key totals (revenue, profit, orders)</small></li>
+              <li>Inventory <small>— every item with prices and stock</small></li>
+              <li>Orders <small>— one row per order</small></li>
+              <li>Order Line Items <small>— one row per item sold</small></li>
+            </ul>
+            <div class="c-export__actions">
+              <button id="js-export-run" class="btn" type="button">Export to Excel</button>
             </div>
           </div>
         </div>

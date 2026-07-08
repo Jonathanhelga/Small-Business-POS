@@ -1,0 +1,107 @@
+#export-data-modal {
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background-color: var(--clr-overlay);
+}
+
+#c-modal-export {
+    width: 440px;
+    max-width: 92vw;
+    border-radius: 14px;
+    overflow: hidden;
+    background-color: var(--clr-panel);
+    border: 1px solid var(--clr-border);
+    box-shadow: var(--shadow);
+}
+
+#c-modal-export .c-modal__header {
+    padding: 1.5rem 1.6rem 0.25rem;
+    background: transparent;
+    border-bottom: none;
+}
+#c-modal-export .c-modal__title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--clr-text-primary);
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
+#c-modal-export .c-modal__body {
+    padding: 0.5rem 1.6rem 1.5rem;
+}
+
+.c-export__desc {
+    margin: 0 0 1.1rem;
+    color: var(--clr-text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+
+/* The "what's included" list of sheets the workbook will contain. */
+.c-export__sheets {
+    list-style: none;
+    margin: 0 0 1.6rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--clr-border);
+    border-radius: 10px;
+    background-color: var(--clr-surface-alt);
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+.c-export__sheets li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+    color: var(--clr-text-primary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+.c-export__sheets li::before {
+    content: "";
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--clr-primary);
+    transform: translateY(-1px);
+}
+.c-export__sheets small {
+    color: var(--clr-text-secondary);
+    font-size: 0.82rem;
+}
+
+.c-export__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+.c-export__actions .btn {
+    padding: 0.65rem 1.25rem;
+    border-radius: 9px;
+    font-size: 0.92rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.05s ease;
+}
+.c-export__actions .btn:active { transform: translateY(1px); }
+.c-export__actions .btn:focus-visible {
+    outline: 2px solid var(--clr-primary);
+    outline-offset: 2px;
+}
+.c-export__actions .btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+#js-export-run {
+    background-color: #4E7397;
+    color: #ffffff;
+}
+#js-export-run:hover { background-color: #426483; }

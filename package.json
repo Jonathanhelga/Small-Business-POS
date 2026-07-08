@@ -25,7 +25,8 @@
     "jsbarcode": "^3.12.3",
     "nodemailer": "^7.0.12",
     "otp-generator": "^4.0.1",
-    "vite": "^6.4.1"
+    "vite": "^6.4.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"
