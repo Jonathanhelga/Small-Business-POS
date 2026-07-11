@@ -1,9 +1,10 @@
+
 import * as XLSX from 'xlsx';
 import { toggleModal } from './modal-handler';
 import { fetchInventory, fetchOrders, fetchUserProfile, getCachedUserProfile } from './firebase';
-import { getItemCategories } from './item_categories';
 import { showToast } from './toast';
 import { allItems } from './search_item';
+import { getExcelCurrencyFormat } from './formatCurrency';
 
 // The signed-in user, captured on init so runExport can scope its owner queries.
 let currentUser = null;
@@ -19,6 +20,8 @@ export function initExport(user) {
         openBtn.addEventListener('click', () => {
             toggleModal('features-modal');
             toggleModal('export-data-modal');
+            // Start each visit with a clean slate — no stale card from last time.
+            resetFileCard();
         });
     }
 
@@ -50,23 +53,57 @@ function fileDateStamp() {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-// One row per inventory item. Money columns stay numeric (sortable/summable),
-// with the active currency code carried in the header.
+// A YYYY-MM-DD date input → a local Date at the start (or end) of that day, so
+// the range is inclusive of both boundary days. Returns null for empty/invalid.
+function parseRangeInput(value, endOfDay) {
+    if (!value) return null;
+    const [y, m, d] = value.split('-').map(Number);
+    if (!y || !m || !d) return null;
+    return endOfDay
+        ? new Date(y, m - 1, d, 23, 59, 59, 999)
+        : new Date(y, m - 1, d, 0, 0, 0, 0);
+}
+
+// Keep only orders whose createdAt falls inside [from, to]. Either bound may be
+// null (open-ended); both null returns every order untouched.
+function filterOrdersByRange(orders, from, to) {
+    if (!from && !to) return orders;
+    return orders.filter((order) => {
+        const d = toJsDate(order.createdAt);
+        if (!d || isNaN(d)) return false;
+        if (from && d < from) return false;
+        if (to && d > to) return false;
+        return true;
+    });
+}
+
+// Bytes → a compact human-readable size for the download card.
+function formatFileSize(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    const kb = bytes / 1024;
+    if (kb < 1024) return `${Math.round(kb)} KB`;
+    return `${(kb / 1024).toFixed(1)} MB`;
+}
+
+// One row per inventory item, columns in the order the modal advertises. Money
+// columns stay numeric (sortable/summable), with the currency code in the header.
+// Margin/Profit is the per-unit gain (Sell − Cost).
 function buildInventoryRows(items, cur) {
-    return items.map((item) => ({
-        'SKU': item.sku || '',
-        'Item Name': item.itemName || '',
-        'Category': getItemCategories(item).join(', '),
-        [`Cost Price (${cur})`]: item.costPrice ?? 0,
-        [`Sell Price (${cur})`]: item.sellPrice ?? 0,
-        'Stock Level': item.stockLevel ?? 0,
-        'Min Stock Level': item.minStockLevel ?? 0,
-        'Unit': item.unit || '',
-        'Supplier': item.supplier || '',
-        'Description': item.description || '',
-        'Created At': formatCellDate(item.createdAt),
-        'Last Updated': formatCellDate(item.lastUpdated),
-    }));
+    return items.map((item) => {
+        const cost = item.costPrice ?? 0;
+        const sell = item.sellPrice ?? 0;
+        return {
+            'Item Name': item.itemName || '',
+            'SKU': item.sku || '',
+            'Stock Level': item.stockLevel ?? 0,
+            'Unit': item.unit || '',
+            [`Cost Price (${cur})`]: cost,
+            [`Sell Price (${cur})`]: sell,
+            [`Margin/Profit (${cur})`]: sell - cost,
+            'Supplier': item.supplier || '',
+            'Description': item.description || '',
+        };
+    });
 }
 
 // An order's custom fields flattened to { label: value } so they become their
@@ -164,50 +201,158 @@ function computeColWidths(rows) {
     });
 }
 
+// Stamp the currency mask onto money cells so Excel shows "Rp 15.000" while the
+// cell stays a real number. Money cells are the ones our row builders tagged with
+// the "(<currency>)" marker: in the header for the tabular sheets, or in the
+// Metric label for the two money rows on the Summary sheet.
+function applyCurrencyFormat(ws, cur) {
+    if (!ws['!ref']) return;
+    const fmt = getExcelCurrencyFormat(cur);
+    const marker = `(${cur})`;
+    const range = XLSX.utils.decode_range(ws['!ref']);
+
+    // Scan the header row: collect money columns, and note the Summary "Value" column.
+    const moneyCols = new Set();
+    let valueCol = -1;
+    for (let c = range.s.c; c <= range.e.c; c++) {
+        const head = ws[XLSX.utils.encode_cell({ r: 0, c })];
+        const text = head && typeof head.v === 'string' ? head.v : '';
+        if (text.includes(marker)) moneyCols.add(c);
+        if (text === 'Value') valueCol = c;
+    }
+
+    for (let r = 1; r <= range.e.r; r++) {
+        moneyCols.forEach((c) => {
+            const cell = ws[XLSX.utils.encode_cell({ r, c })];
+            if (cell && typeof cell.v === 'number') cell.z = fmt;
+        });
+        // Summary sheet: a row is money when its Metric label carries the marker.
+        if (valueCol >= 0) {
+            const metric = ws[XLSX.utils.encode_cell({ r, c: 0 })];
+            const value = ws[XLSX.utils.encode_cell({ r, c: valueCol })];
+            if (metric && typeof metric.v === 'string' && metric.v.includes(marker)
+                && value && typeof value.v === 'number') {
+                value.z = fmt;
+            }
+        }
+    }
+}
+
 // Turn rows into a worksheet and append it. Empty datasets get a friendly
 // placeholder cell so the tab still exists.
-function appendSheet(wb, name, rows) {
+function appendSheet(wb, name, rows, cur) {
     const sheet = XLSX.utils.json_to_sheet(rows.length ? rows : [{ 'No data': '' }]);
     sheet['!cols'] = computeColWidths(rows);
+    applyCurrencyFormat(sheet, cur);
     XLSX.utils.book_append_sheet(wb, sheet, name);
+}
+
+// Clear the result box, releasing any object URL from a previous generate.
+function resetFileCard() {
+    const box = document.getElementById('generated-file-box');
+    if (!box) return;
+    if (box.dataset.url) {
+        URL.revokeObjectURL(box.dataset.url);
+        delete box.dataset.url;
+    }
+    box.replaceChildren();
+    box.hidden = true;
+}
+
+// Build the download card: icon, filename, a "4 sheets · N orders · size" meta
+// line, and a Download button that saves the blob.
+function renderFileCard(fileName, blob, orderCount) {
+    const box = document.getElementById('generated-file-box');
+    if (!box) return;
+
+    resetFileCard();
+
+    const url = URL.createObjectURL(blob);
+    box.dataset.url = url;
+
+    const icon = document.createElement('span');
+    icon.className = 'c-export__file-icon';
+    icon.textContent = '📄';
+
+    const info = document.createElement('div');
+    info.className = 'c-export__file-info';
+
+    const name = document.createElement('p');
+    name.className = 'c-export__file-name';
+    name.textContent = fileName;
+
+    const meta = document.createElement('p');
+    meta.className = 'c-export__file-meta';
+    const orderLabel = orderCount === 1 ? 'order' : 'orders';
+    meta.textContent = `4 sheets · ${orderCount} ${orderLabel} · ${formatFileSize(blob.size)}`;
+
+    info.append(name, meta);
+
+    const download = document.createElement('button');
+    download.type = 'button';
+    download.className = 'c-export__download';
+    download.textContent = 'Download';
+    download.addEventListener('click', () => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    });
+
+    box.append(icon, info, download);
+    box.hidden = false;
 }
 
 async function runExport() {
     if (isExporting) return;
     if (!currentUser) { showToast('Please sign in to export.', 'error'); return; }
 
+    const from = parseRangeInput(document.getElementById('js-export-from')?.value, false);
+    const to = parseRangeInput(document.getElementById('js-export-to')?.value, true);
+    if (from && to && from > to) {
+        showToast('The "From" date is after the "To" date.', 'error');
+        return;
+    }
+
     isExporting = true;
     const runBtn = document.getElementById('js-export-run');
     const originalLabel = runBtn ? runBtn.textContent : '';
-    if (runBtn) { runBtn.disabled = true; runBtn.textContent = 'Exporting…'; }
+    if (runBtn) { runBtn.disabled = true; runBtn.textContent = 'Generating…'; }
 
     try {
         const profile = getCachedUserProfile() || await fetchUserProfile(currentUser.uid);
         const cur = profile?.currency || 'IDR';
         // Prefer the live in-memory inventory; fall back to a fetch if it isn't loaded yet.
         const items = (allItems && allItems.length) ? allItems : await fetchInventory(currentUser.uid);
-        const orders = await fetchOrders(currentUser.uid);
+        const orders = filterOrdersByRange(await fetchOrders(currentUser.uid), from, to);
 
         if (!items.length && !orders.length) {
-            showToast('No data to export yet.', 'error');
+            showToast('No data to export for this range.', 'error');
             return;
         }
 
         const wb = XLSX.utils.book_new();
-        appendSheet(wb, 'Summary', buildSummaryRows(profile, items, orders, cur));
-        appendSheet(wb, 'Inventory', buildInventoryRows(items, cur));
-        appendSheet(wb, 'Orders', buildOrderRows(orders, cur));
-        appendSheet(wb, 'Order Line Items', buildLineItemRows(orders, cur));
+        appendSheet(wb, 'Summary', buildSummaryRows(profile, items, orders, cur), cur);
+        appendSheet(wb, 'Inventory', buildInventoryRows(items, cur), cur);
+        appendSheet(wb, 'Orders', buildOrderRows(orders, cur), cur);
+        appendSheet(wb, 'Order Line Items', buildLineItemRows(orders, cur), cur);
 
         const bizName = (profile?.business_name || 'POS').replace(/[^\w-]+/g, '_');
-        XLSX.writeFile(wb, `${bizName}_export_${fileDateStamp()}.xlsx`);
-        showToast('Export downloaded.');
-        toggleModal('export-data-modal');
+        const fileName = `${bizName}_export_${fileDateStamp()}.xlsx`;
+        const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+        const blob = new Blob([buf], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+
+        renderFileCard(fileName, blob, orders.length);
+        showToast('Export ready to download.');
     } catch (err) {
         console.error('Export failed:', err);
         showToast('Export failed. Please try again.', 'error');
     } finally {
         isExporting = false;
-        if (runBtn) { runBtn.disabled = false; runBtn.textContent = originalLabel || 'Export to Excel'; }
+        if (runBtn) { runBtn.disabled = false; runBtn.textContent = originalLabel || 'Generate export'; }
     }
 }

@@ -476,27 +476,6 @@
         </div>
     </div>
 
-    <div id="export-data-modal" class="c-modal c-modal--center is-hidden">
-        <div class="c-modal__panel" id="c-modal-export">
-          <header class="c-modal__header">
-            <h2 class="c-modal__title">Export Data</h2>
-            <button type="button" class="c-modal__close" aria-label="Close" data-modal-close="export-data-modal">&times;</button>
-          </header>
-          <div class="c-modal__body">
-            <p class="c-export__desc">Download all your business data as a single Excel workbook (.xlsx). Opens in Excel, Numbers, and Google Sheets.</p>
-            <ul class="c-export__sheets">
-              <li>Summary <small>— key totals (revenue, profit, orders)</small></li>
-              <li>Inventory <small>— every item with prices and stock</small></li>
-              <li>Orders <small>— one row per order</small></li>
-              <li>Order Line Items <small>— one row per item sold</small></li>
-            </ul>
-            <div class="c-export__actions">
-              <button id="js-export-run" class="btn" type="button">Export to Excel</button>
-            </div>
-          </div>
-        </div>
-    </div>
-
     <div id="order-item-modal" class="c-modal c-modal--center is-hidden">
       <div class="c-modal__panel" id="c-modal-order-item">
           <header class="c-modal__header">
@@ -963,6 +942,7 @@
         </div>
       </div>
     </div>
+
     <div id="manage-item-modal" class="c-modal c-modal--center is-hidden">
       <div class="c-modal__panel" id="c-modal-manage-item">
         <header class="c-modal__header">
@@ -1268,7 +1248,6 @@
               <button type="button" class="c-chip" data-range="7d">Last 7 days</button>
               <button type="button" class="c-chip" data-range="30d">Last 30 days</button>
               <button type="button" class="c-chip" data-range="month">This month</button>
-              <!-- <button type="button" class="c-chip" data-range="custom">Custom</button> -->
             </div>
           </section>
 
@@ -1411,6 +1390,50 @@
           <div class="c-confirm__actions">
             <button type="button" class="btn btn--ghost" id="ap-gate-cancel-btn">Cancel</button>
             <button type="button" class="btn btn--primary" id="ap-gate-confirm-btn">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="export-data-modal" class="c-modal c-modal--center is-hidden">
+      <div class="c-modal__panel" id="c-modal-export">
+        <header class="c-modal__header">
+          <h2 class="c-modal__title">Export Data</h2>
+          <button type="button" class="c-modal__close" aria-label="Close" data-modal-close="export-data-modal">&times;</button>
+        </header>
+
+        <div class="c-modal__body">
+          <p class="c-export__desc">Download your business data as an Excel workbook (.xlsx). Opens in Excel, Numbers, and Google Sheets.</p>
+
+          <div class="c-export__section">
+            <h3 class="c-export__label">What's included</h3>
+            <ul class="c-export__sheets">
+              <li>Summary <small>— key totals (revenue, profit, orders)</small></li>
+              <li>Inventory <small>— every item with prices, stock, and margin</small></li>
+              <li>Orders <small>— one row per order</small></li>
+              <li>Order Line Items <small>— one row per item sold</small></li>
+            </ul>
+          </div>
+
+          <div class="c-export__section">
+            <h3 class="c-export__label">Order date range</h3>
+            <div class="c-export__range">
+              <label class="c-export__range-field">
+                <span>From</span>
+                <input type="date" id="js-export-from" class="c-field__input" />
+              </label>
+              <label class="c-export__range-field">
+                <span>To</span>
+                <input type="date" id="js-export-to" class="c-field__input" />
+              </label>
+            </div>
+            <p class="c-export__hint">Filters the Orders and Order Items sheets only. Inventory always exports in full.</p>
+          </div>
+
+          <div class="c-export__result">
+            <button id="js-export-run" class="btn c-export__generate" type="button">Generate export</button>
+            <!-- After generation, runExport swaps in a download card here. -->
+            <div id="generated-file-box" class="c-export__file" hidden></div>
           </div>
         </div>
       </div>

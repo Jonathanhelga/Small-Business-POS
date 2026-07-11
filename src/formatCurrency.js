@@ -27,6 +27,15 @@ export function getCurrencySymbol(currencyCode = 'IDR') {
     return (CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR).symbol;
 }
 
+// Excel number-format mask for a currency, e.g. IDR → "Rp"#,##0, USD → "$"#,##0.00.
+// Used to display money cells with their symbol and thousands separators while
+// keeping the underlying value numeric (so Excel can still sum and sort it).
+export function getExcelCurrencyFormat(currencyCode = 'IDR') {
+    const cfg = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR;
+    const decimals = cfg.fractionDigits > 0 ? '.' + '0'.repeat(cfg.fractionDigits) : '';
+    return `"${cfg.symbol}"#,##0${decimals}`;
+}
+
 export function getSupportedCurrencies() {
     return Object.keys(CURRENCY_CONFIG);
 }
