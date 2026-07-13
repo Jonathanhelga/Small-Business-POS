@@ -66,6 +66,22 @@
     color: var(--clr-status-neg-fg);
 }
 
+.mc-hint {
+    margin: 0.3rem 0 0;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--clr-text-secondary);
+}
+
+.mc-hint__steps {
+    margin: 0.35rem 0 0;
+    padding-left: 2rem;
+}
+
+.mc-hint__steps li {
+    margin-top: 0.15rem;
+}
+
 /*  List of categories (cards mirror .mi-card)  */
 
 .mc-eyebrow {
