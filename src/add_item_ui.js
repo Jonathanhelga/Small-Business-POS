@@ -1,5 +1,6 @@
 import { submitItemData, auth, getCachedUserProfile } from "./firebase";
 import { getCurrencySymbol } from './formatCurrency';
+import { attachMoneyInput, parseMoneyInput } from './moneyInput';
 import { addSingleItem, allItems } from "./search_item";
 import { toggleModal } from './modal-handler';
 import { showToast } from "./toast";
@@ -7,6 +8,14 @@ import { showToast } from "./toast";
 // Currency symbol for the current user, captured when the modal opens so the
 // running "added this session" list can label prices without re-reading it.
 let currencySymbol = 'Rp';
+
+// The currency CODE (not symbol) backing the money inputs. Read as a function by
+// attachMoneyInput so a currency change in Profile is picked up on the next open.
+let currencyCode = 'IDR';
+
+function currentCurrency() {
+    return currencyCode;
+}
 
 function generateNextSku(items) {
     const numbers = items
@@ -86,8 +95,12 @@ export function initInventoryForm() {
     const skuAutoCheckbox = document.getElementById('sku-auto-checkbox');
     const skuInput = document.getElementById('sku');
 
+    attachMoneyInput(document.getElementById('cost-price'), currentCurrency);
+    attachMoneyInput(document.getElementById('sell-price'), currentCurrency);
+
     document.getElementById('js-item-create-open').addEventListener('click', () => {
         const currency = getCachedUserProfile()?.currency || 'IDR';
+        currencyCode = currency;
         currencySymbol = getCurrencySymbol(currency);
         document.getElementById('c-cost-currency').textContent = currencySymbol;
         document.getElementById('c-sell-currency').textContent = currencySymbol;
@@ -140,6 +153,17 @@ export function initInventoryForm() {
             return;
         }
 
+        // Reject a price we could not read rather than defaulting it to 0. A silent 0
+        // cost would report the whole sale as profit in the Excel export.
+        const cost = parseMoneyInput(document.getElementById('cost-price').value, currentCurrency());
+        const sell = parseMoneyInput(document.getElementById('sell-price').value, currentCurrency());
+        const badPrice = !cost.valid ? 'cost-price' : (!sell.valid ? 'sell-price' : null);
+        if (badPrice) {
+            showToast('Cost Price and Selling Price must be valid numbers.', 'error');
+            document.getElementById(badPrice).focus();
+            return;
+        }
+
         const originalText = submitBtn.textContent;
         submitBtn.disabled = true;
         submitBtn.textContent = "Saving Item...";
@@ -147,8 +171,8 @@ export function initInventoryForm() {
             tagColor: document.getElementById('tag-color').value,
             sku: document.getElementById('sku').value.trim().toUpperCase(),
             itemName: document.getElementById('item-name').value.trim(),
-            costPrice: Number(document.getElementById('cost-price').value) || 0,
-            sellPrice: Number(document.getElementById('sell-price').value) || 0,
+            costPrice: cost.value,
+            sellPrice: sell.value,
             stockLevel: parseFloat(document.getElementById('item-qty').value) || 0,
             minStockLevel: parseFloat(document.getElementById('min-stock-level').value) || 0,
             unit: document.getElementById('item-unit').value,

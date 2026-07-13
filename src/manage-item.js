@@ -1,5 +1,6 @@
 import { updateItemData, deleteInventoryItem, getCachedUserProfile, addMetaUpdateHistory, fetchMetaHistory } from './firebase';
 import { getCurrencySymbol, formatCurrency } from './formatCurrency';
+import { attachMoneyInput, parseMoneyInput, formatMoneyInput } from './moneyInput';
 import { toggleModal } from './modal-handler';
 import { allItems, loadAllItems, updateLocalItem, removeLocalItem, refreshGrid } from './search_item';
 import { createSelection } from './selection';
@@ -14,6 +15,10 @@ let filteredItems  = [];
 const selection    = createSelection();
 let selectedTheme  = 'primary';
 let selectedCategories = new Set();
+
+function currentCurrency() {
+    return getCachedUserProfile()?.currency || 'IDR';
+}
 
 // Change-history paging state (mirrors the stock-update history in the
 // inventory-update modal).
@@ -209,9 +214,10 @@ function populateDetail(item) {
     document.getElementById('mi-ro-updated').textContent = formatTimestamp(item.lastUpdated);
     document.getElementById('mi-ro-desc').textContent    = item.description || '—';
 
-    // Editable fields
-    document.getElementById('mi-edit-cost').value     = item.costPrice ?? '';
-    document.getElementById('mi-edit-sell').value     = item.sellPrice ?? '';
+    // Editable fields. The money inputs are masked, so load them grouped (1.500.000)
+    // to match what typing into them produces.
+    document.getElementById('mi-edit-cost').value     = item.costPrice == null ? '' : formatMoneyInput(String(item.costPrice), currentCurrency());
+    document.getElementById('mi-edit-sell').value     = item.sellPrice == null ? '' : formatMoneyInput(String(item.sellPrice), currentCurrency());
     document.getElementById('mi-edit-min').value      = item.minStockLevel ?? '';
     document.getElementById('mi-edit-supplier').value = item.supplier ?? '';
     selectedCategories = new Set(getItemCategories(item));
@@ -269,18 +275,23 @@ async function handleSave() {
     const item = selection.get();
     if (!item) return;
 
-    const costPrice     = Number(document.getElementById('mi-edit-cost').value);
-    const sellPrice     = Number(document.getElementById('mi-edit-sell').value);
+    // parseMoneyInput reports a blank or unreadable field as invalid instead of 0.
+    // Number('') is 0, which passed the old isFinite check, so clearing the cost field
+    // used to save a silent 0 and report the whole sale as profit in the export.
+    const cost          = parseMoneyInput(document.getElementById('mi-edit-cost').value, currentCurrency());
+    const sell          = parseMoneyInput(document.getElementById('mi-edit-sell').value, currentCurrency());
+    const costPrice     = cost.value;
+    const sellPrice     = sell.value;
     const minStockLevel = parseFloat(document.getElementById('mi-edit-min').value);
     const supplier      = document.getElementById('mi-edit-supplier').value.trim();
     const categories    = [...selectedCategories];
     const tagColor      = selectedTheme;
 
-    if (!Number.isFinite(costPrice) || costPrice < 0) {
+    if (!cost.valid || costPrice < 0) {
         showFeedback('Cost Price must be a number of 0 or more.', 'error');
         return;
     }
-    if (!Number.isFinite(sellPrice) || sellPrice < 0) {
+    if (!sell.valid || sellPrice < 0) {
         showFeedback('Sell Price must be a number of 0 or more.', 'error');
         return;
     }
@@ -487,6 +498,10 @@ export function initManageItem(user) {
     if (!openBtn) return;
 
     buildThemeSwatches();
+
+    // Attached once at boot, not on each open, so the listener does not stack.
+    attachMoneyInput(document.getElementById('mi-edit-cost'), currentCurrency);
+    attachMoneyInput(document.getElementById('mi-edit-sell'), currentCurrency);
 
     openBtn.addEventListener('click', () => {
         toggleModal('features-modal');
