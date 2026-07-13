@@ -96,7 +96,7 @@ export function scanAddItem(itemID){
 
     const existingIndex = orderedItems.findIndex(item => item.id === itemID);
     if(existingIndex === -1){
-        orderedItems.push({id: item.id, name: item.itemName, price: item.sellPrice, quantity: 1});
+        orderedItems.push({id: item.id, name: item.itemName, price: item.sellPrice, costPrice: item.costPrice, quantity: 1});
         appendRow(orderedItems.length - 1);
         if(orderedItems.length === 1){ fullRender(); }
     }
@@ -378,11 +378,13 @@ async function handleCheckoutFormSubmit(e) {
         }
     }
 
+    // Items added before costPrice existed have no cost recorded, so fall back to 0 rather than
+    // letting undefined reach Firestore, which rejects the whole batch.
     const mappedItems = orderedItems.map(item => ({
         id: item.id,
         name: item.name,
         price: item.price,
-        cost: item.costPrice,
+        cost: item.costPrice ?? 0,
         quantity: item.quantity,
         subtotal: item.price * item.quantity,
     }));
