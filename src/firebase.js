@@ -196,15 +196,6 @@ export async function upsertCustomerByPhone({ name, phone }, uid) {
     return { id: docRef.id, name, phone: phoneKey };
 }
 
-export async function syncStockToFirestore(itemId, newQuantity) {
-    await updateDoc(doc(db, 'inventory', itemId), {
-        stockLevel: newQuantity,
-        lastUpdated: serverTimestamp(),
-    });
-    const item = allItems.find(i => i.id === itemId);
-    if (item) item.stockLevel = newQuantity;
-}
-
 export async function addStockUpdateHistory(itemId, qtyAdded, previousStock) {
     const ref = collection(db, 'inventory', itemId, 'stockUpdates');
     await addDoc(ref, { qtyAdded, previousStock, timestamp: serverTimestamp() });
@@ -243,7 +234,7 @@ export async function fetchMetaHistory(itemId, pageSize, lastDoc = null) {
 
 // Update editable metadata on an inventory item (prices, supplier, min stock,
 // tag color). Stock level is intentionally NOT touched here — that flows through
-// the inventory-update modal / syncStockToFirestore.
+// the inventory-update modal.
 export async function updateItemData(itemId, fields) {
     await updateDoc(doc(db, 'inventory', itemId), {
         ...fields,
