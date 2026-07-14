@@ -159,7 +159,26 @@ export function requireAdminPin() {
         return Promise.resolve(false);
     }
     openPinGate();
-    return new Promise(resolve => { resolvePinConfirm = resolve; });
+    return new Promise(resolve => {
+        let settled = false;
+        const settle = (val) => {
+            if (!settled) {
+                settled = true;
+                observer.disconnect();
+                resolve(val);
+            }
+        };
+
+        const gateModal = document.getElementById('admin-pin-gate-modal');
+        const observer = new MutationObserver(() => {
+            if (gateModal.classList.contains('is-hidden')) {
+                settle(false);
+            }
+        });
+        observer.observe(gateModal, { attributes: true, attributeFilter: ['class'] });
+
+        resolvePinConfirm = settle;
+    });
 }
 
 export function initAdminPin(user) {

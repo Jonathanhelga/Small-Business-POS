@@ -15,17 +15,29 @@ export function showConfirm({ title, message, confirmText = 'Confirm', cancelTex
         cancel_box.textContent = cancelText;
         panel.classList.toggle('is-danger', danger);
         toggleModal('confirm-modal');
-        
-        const onConfirm = () => { cleanup(); resolve(true); };
-        const onCancel  = () => { cleanup(); resolve(false); }; 
 
-        const cleanup = () => {
-          confirm_box.removeEventListener('click', onConfirm);                                                                                                     
-          cancel_box.removeEventListener('click', onCancel);                                                                                                     
-          toggleModal('confirm-modal');   // close the modal                                                                                                       
+        let resolved = false;
+        const safeResolve = (val) => {
+          if (!resolved) {
+            resolved = true;
+            observer.disconnect();
+            confirm_box.removeEventListener('click', onConfirm);
+            cancel_box.removeEventListener('click', onCancel);
+            resolve(val);
+          }
         };
 
-        confirm_box.addEventListener('click', onConfirm);                                                                                                            
+        const onConfirm = () => { toggleModal('confirm-modal'); safeResolve(true); };
+        const onCancel  = () => { toggleModal('confirm-modal'); safeResolve(false); };
+
+        const observer = new MutationObserver(() => {
+          if (confirm_modal.classList.contains('is-hidden')) {
+            safeResolve(false);
+          }
+        });
+        observer.observe(confirm_modal, { attributes: true, attributeFilter: ['class'] });
+
+        confirm_box.addEventListener('click', onConfirm);
         cancel_box.addEventListener('click', onCancel);
     });
 }
