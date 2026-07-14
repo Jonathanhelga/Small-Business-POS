@@ -27,10 +27,6 @@ export function getCurrencySymbol(currencyCode = 'IDR') {
     return (CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR).symbol;
 }
 
-// The group/decimal characters a locale actually uses, read back from Intl rather
-// than assumed: IDR groups with "." and IDR's decimal is ",", while USD is the
-// reverse. Money inputs need these to format as the user types and to strip the
-// separators back out before saving.
 export function getCurrencySeparators(currencyCode = 'IDR') {
     const cfg = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR;
     const parts = new Intl.NumberFormat(cfg.locale).formatToParts(11111.1);
@@ -41,9 +37,6 @@ export function getCurrencySeparators(currencyCode = 'IDR') {
     };
 }
 
-// Excel number-format mask for a currency, e.g. IDR → "Rp"#,##0, USD → "$"#,##0.00.
-// Used to display money cells with their symbol and thousands separators while
-// keeping the underlying value numeric (so Excel can still sum and sort it).
 export function getExcelCurrencyFormat(currencyCode = 'IDR') {
     const cfg = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR;
     const decimals = cfg.fractionDigits > 0 ? '.' + '0'.repeat(cfg.fractionDigits) : '';

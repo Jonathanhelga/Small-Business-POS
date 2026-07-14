@@ -5,17 +5,11 @@ import { addSingleItem, allItems } from "./search_item";
 import { toggleModal } from './modal-handler';
 import { showToast } from "./toast";
 
-// Currency symbol for the current user, captured when the modal opens so the
-// running "added this session" list can label prices without re-reading it.
 let currencySymbol = 'Rp';
 
-// The currency CODE (not symbol) backing the money inputs. Read as a function by
-// attachMoneyInput so a currency change in Profile is picked up on the next open.
 let currencyCode = 'IDR';
 
-function currentCurrency() {
-    return currencyCode;
-}
+function currentCurrency() { return currencyCode; }
 
 function generateNextSku(items) {
     const numbers = items
