@@ -75,7 +75,7 @@ export function addItemToOrder(itemID, itemName, itemPrice, costPrice, itemQuant
         showToast(`Only ${stockItem.stockLevel} ${stockItem.unit || 'units'} available`, 'error');
         return;
     }
-    const existingIndex = orderedItems.findIndex(item => item.name === itemName);
+    const existingIndex = orderedItems.findIndex(item => item.id === itemID);
     if(existingIndex !== -1){
         orderedItems[existingIndex].quantity = itemQuantity;
         updateRow(existingIndex);
