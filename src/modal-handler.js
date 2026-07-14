@@ -1,24 +1,27 @@
 export function toggleModal(idName){
     const modal = document.getElementById(idName);
-    const handleBackdropClick = (event) => { 
-        if (event.target === modal) toggleModal(idName); 
-    };
-
     const noBackdropClose = ['customer-checkout-modal'];
 
     if(modal.classList.contains('is-hidden')){
         modal.classList.remove('is-hidden');
-        if (!noBackdropClose.includes(idName)) modal.addEventListener('click', handleBackdropClick);
+        if (!noBackdropClose.includes(idName)) {
+            modal._backdropHandler = (event) => {
+                if (event.target === modal) toggleModal(idName);
+            };
+            modal.addEventListener('click', modal._backdropHandler);
+        }
     }
 
     else {
+        if (modal._backdropHandler) {
+            modal.removeEventListener('click', modal._backdropHandler);
+            modal._backdropHandler = null;
+        }
         modal.classList.add('is-closing');
         modal.addEventListener('animationend', function() {
             modal.classList.add('is-hidden');
             modal.classList.remove('is-closing');
-            modal.onclick = null;
         }, { once: true });
-        modal.removeEventListener('click', handleBackdropClick);
     }
 }
 
