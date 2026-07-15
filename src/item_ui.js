@@ -16,7 +16,6 @@ export function createItemButton(container, item){
     button.addEventListener('click', () => { 
         const buttonID = button.getAttribute('data-id');
         openOrderItemModal(buttonID);
-        // toggleModal('order-item-modal');
     });
 
     if (item.tagColor) { button.classList.add(`btn--${item.tagColor}`);} 
@@ -28,8 +27,12 @@ export function createItemButton(container, item){
 export function renderItemGrid(items){
     const container = document.getElementById('item-grid');
     if(!container) return;
-    container.innerHTML = '';
+    container.replaceChildren();
 
-    if (items.length === 0) { container.innerHTML = '<p>No items in inventory.</p>'; }
+    if (items.length === 0) { 
+        const emptyInfo = document.createElement("p");
+        emptyInfo.textContent = "No items in inventory.";
+        container.appendChild(emptyInfo);
+    }
     else { items.forEach(item => createItemButton(container, item)); }
 }

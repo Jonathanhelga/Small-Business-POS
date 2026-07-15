@@ -87,7 +87,7 @@ export function switchView(targetView){
         return;
     }
     const clone = template.content.cloneNode(true);
-    container.innerHTML = '';
+    container.replaceChildren();
     container.appendChild(clone);
 
     if(targetView === 'logIn'){
