@@ -1,7 +1,7 @@
 import { toggleModal } from './modal-handler';
 import { formatCurrency, getCurrencySymbol } from "./formatCurrency";
 import { allItems, updateLocalStock } from "./search_item";
-import { auth, submitOrder, upsertCustomerByPhone, saveOrderFieldDefinitions, getCachedUserProfile } from "./firebase";
+import { auth, submitOrder, upsertCustomerByPhone, saveOrderFieldDefinitions, getCachedUserProfile, getCurrentCurrency as currentCurrency } from "./firebase";
 import { refreshInsights } from './sales_insight';
 import {
     openCustomerCheckout,
@@ -24,8 +24,6 @@ export function setTaxRate(rate) {
 }
 
 export function getTaxRate() { return taxRate; }
-
-function currentCurrency() { return getCachedUserProfile()?.currency || 'IDR'; }
 
 export function openOrderItemModal(itemID) {
     const item = allItems.find(item => item.id === itemID); 

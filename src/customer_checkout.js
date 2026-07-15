@@ -1,17 +1,13 @@
 import { toggleModal } from './modal-handler';
 import { formatCurrency, getCurrencySymbol } from './formatCurrency';
 import { getOrderedItems, getTaxRate } from './order-add_item';
-import { auth, fetchCustomers, getCachedUserProfile, fetchUserProfile } from './firebase';
+import { auth, fetchCustomers, getCachedUserProfile, fetchUserProfile, getCurrentCurrency as currentCurrency } from './firebase';
 import { initCustomFields, resetCustomFields, collectCustomFields, collectFieldDefinitions, renderSavedFields } from './checkout_custom_fields';
 
 const MODAL_ID = 'customer-checkout-modal';
 const CUSTOMER_FIELDS = ['js-checkout-customer-name', 'js-checkout-customer-phone'];
 
 let customerCache = [];
-
-function currentCurrency() {
-    return getCachedUserProfile()?.currency || 'IDR';
-}
 
 export function initCustomerCheckout() {
     const discountInput = document.getElementById('js-checkout-discount');

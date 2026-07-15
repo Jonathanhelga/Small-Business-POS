@@ -55,6 +55,11 @@ let cachedUserProfile = null;
 
 export function getCachedUserProfile() { return cachedUserProfile; }
 
+// Convenience reader over the cached profile's currency, defaulting to IDR when
+// no profile is loaded. Centralizes the getCachedUserProfile()?.currency || 'IDR'
+// expression that the money-formatting modules previously each redeclared.
+export function getCurrentCurrency() { return cachedUserProfile?.currency || 'IDR'; }
+
 export function setCachedUserProfile(profile) { cachedUserProfile = profile; }
 
 export function clearCachedUserProfile() {cachedUserProfile = null; } 

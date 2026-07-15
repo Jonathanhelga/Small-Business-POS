@@ -1,4 +1,4 @@
-import { updateItemData, deleteInventoryItem, getCachedUserProfile, addMetaUpdateHistory, fetchMetaHistory } from './firebase';
+import { updateItemData, deleteInventoryItem, getCachedUserProfile, addMetaUpdateHistory, fetchMetaHistory, getCurrentCurrency as currentCurrency } from './firebase';
 import { getCurrencySymbol, formatCurrency } from './formatCurrency';
 import { attachMoneyInput, parseMoneyInput, formatMoneyInput } from './moneyInput';
 import { toggleModal } from './modal-handler';
@@ -15,10 +15,6 @@ let filteredItems  = [];
 const selection    = createSelection();
 let selectedTheme  = 'primary';
 let selectedCategories = new Set();
-
-function currentCurrency() {
-    return getCachedUserProfile()?.currency || 'IDR';
-}
 
 // Change-history paging state (mirrors the stock-update history in the
 // inventory-update modal).

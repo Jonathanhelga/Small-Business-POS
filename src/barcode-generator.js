@@ -1,6 +1,6 @@
 import JsBarcode from 'jsbarcode';
 import html2canvas from 'html2canvas';
-import { fetchInventory, getCachedUserProfile } from './firebase';
+import { fetchInventory, getCurrentCurrency as currentCurrency } from './firebase';
 import { toggleModal } from './modal-handler';
 import { formatCurrency, getCurrencySymbol } from './formatCurrency';
 import { showToast } from './toast';
@@ -11,9 +11,6 @@ let allItems      = [];
 let filteredItems = [];
 const selection   = createSelection();
 
-function currentCurrency() {
-    return getCachedUserProfile()?.currency || 'IDR';
-}
 let currentObjectUrl = null;
 let uploadedImageUrl = null;
 let activeSize = 'large';

@@ -1,4 +1,4 @@
-import { db, getCachedUserProfile, addStockUpdateHistory, fetchStockHistory } from './firebase';
+import { db, getCurrentCurrency as currentCurrency, addStockUpdateHistory, fetchStockHistory } from './firebase';
 import { doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { toggleModal } from './modal-handler';
 import { allItems, loadAllItems, updateLocalStock } from './search_item';
@@ -13,10 +13,6 @@ const selection   = createSelection();
 const HISTORY_PAGE = 5;
 let historyLastDoc = null;
 let historyItemId  = null;
-
-function currentCurrency() {
-    return getCachedUserProfile()?.currency || 'IDR';
-}
 
 function getStockStatus(current, min) {
     return Number(current ?? 0) >= Number(min ?? 0) ? 'good' : 'alert';

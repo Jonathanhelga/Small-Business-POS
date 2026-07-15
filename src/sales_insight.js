@@ -1,6 +1,6 @@
 import Chart from 'chart.js/auto'
 import { toggleModal } from './modal-handler';
-import { fetchUserProfile, fetchInventory, fetchOrders, getCachedUserProfile } from './firebase';
+import { fetchUserProfile, fetchInventory, fetchOrders, getCurrentCurrency as currentCurrency } from './firebase';
 import { formatCurrency, getCurrencySymbol } from './formatCurrency';
 import { showToast } from './toast';
 
@@ -10,10 +10,6 @@ let chartInstance = null;
 let topItemsSortKey = 'revenue';
 let topItemsSortDir = 'desc';
 let topItemsRows = [];
-
-function currentCurrency() {
-    return getCachedUserProfile()?.currency || 'IDR';
-}
 
 export async function initInsights(user){
     if(!user){ return; }
