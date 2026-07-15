@@ -30,7 +30,7 @@ import { initManageCategories } from './manage_categories';
 import { loadCategories } from './categories';
 import { initBarcodeGenerator } from './barcode-generator';
 import { initInsights } from './sales_insight';
-import { initExport } from './export_data3';
+import { initExport } from './export_data';
 import { initAdminPin } from './admin_pin';
 import { initCustomerCheckout } from './customer_checkout';
 import { initClock } from './clock';

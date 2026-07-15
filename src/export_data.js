@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx-js-style';
 import { toggleModal } from './modal-handler';
 import { fetchInventory, fetchOrders, fetchUserProfile, getCachedUserProfile } from './firebase';
 import { showToast } from './toast';
@@ -12,7 +11,7 @@ const COL_MAX_WCH = 40;
 // Row/column map of the summary sheet. The title banner at row 0 pushes every other block down by one, so these are the single source of truth: the style. Functions below derive their cell addresses from them rather than hardcoding.
 const SUMMARY_TITLE_ROW      = 0;
 const SUMMARY_META_FIRST_ROW = 1;
-const SUMMARY_META_LAST_ROW  = 4; // rows 1-4: label / value pairs
+const SUMMARY_META_LAST_ROW  = 4; 
 const SUMMARY_SPACER_ROW     = 5;
 const SUMMARY_HEADER_ROW     = 6;
 const SUMMARY_FIRST_DATA_ROW = 7;
@@ -20,14 +19,16 @@ const SUMMARY_LAST_COL       = 4; // column E
 const SUMMARY_MONEY_COLS     = [2, 3]; // Total Revenue, Total Profit
 const SUMMARY_MARGIN_COL     = 4; // Margin Percentage
 
-// Excel's percent format multiplies the cell by 100 when it renders, so the cell
-// must hold the raw fraction (0.325) rather than 32.5, or it would read 3250%.
+// Excel's percent format multiplies the cell by 100 when it renders, so the cell must hold the raw fraction (0.325) rather than 32.5, or it would read 3250%.
 const PCT_FORMAT = '0.0%';
 
 const LEFT_ALIGN = { alignment: { horizontal: 'left' } };
 
 let currentUser = null;
 let isExporting = false;
+
+// xlsx-js-style is a ~2.7 MB library. Loaded on demand the first time an export runs (see runExport) rather than statically, so it stays out of the main
+let XLSX = null;
 
 export function initExport(user) {
     if (!user) return;
@@ -61,6 +62,10 @@ async function runExport(){
     if (runBtn) { runBtn.disabled = true; runBtn.textContent = 'Generating…'; }
 
     try {
+        // Fetch the spreadsheet library on first use. Cached in the module-level
+        // XLSX binding so subsequent exports reuse it without re-importing.
+        if (!XLSX) XLSX = await import('xlsx-js-style');
+
         const profile = getCachedUserProfile() || await fetchUserProfile(currentUser.uid);
         const currency = profile?.currency || 'IDR';
         const items = (allItems && allItems.length) ? allItems : await fetchInventory(currentUser.uid);
@@ -90,9 +95,9 @@ function buildSummarySheet(profile, orders, fromDate, toDate, currency){
     const worksheet = XLSX.utils.aoa_to_sheet(rows);
     const { cols, wrapCols } = computeAoaColWidths(rows);
     worksheet['!cols'] = cols;
-    MetaDataStyle(worksheet);
+    metaDataStyle(worksheet);
     
-    TableDataStyle(worksheet, currency);
+    tableDataStyle(worksheet, currency);
 
     wrapColumns(worksheet, wrapCols);
 
@@ -146,7 +151,7 @@ function formatRangeDate(d) {
     return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function MetaDataStyle(worksheet) {
+function metaDataStyle(worksheet) {
     const cleanPaperBoldLabel = { font: { bold: true, color: { rgb: '000000' } }, fill: { fgColor: { rgb: 'FFFFFF' } } };
     const cleanPaperNormalValue = { font: { color: { rgb: '000000' } }, fill: { fgColor: { rgb: 'FFFFFF' } } };
 
@@ -179,7 +184,7 @@ function MetaDataStyle(worksheet) {
     worksheet['!rows'] = [{ hpt: 50 }];
 }
 
-function TableDataStyle(worksheet, cur) {
+function tableDataStyle(worksheet, cur) {
     const headerStyle = {
         font: { bold: true, color: { rgb: 'FFFFFF' } },
         fill: { fgColor: { rgb: '4F81BD' } },
@@ -195,11 +200,16 @@ function TableDataStyle(worksheet, cur) {
     const range = XLSX.utils.decode_range(worksheet['!ref']);
 
     for (let R = SUMMARY_FIRST_DATA_ROW; R <= range.e.r; R++) {
+        // Left-align every cell in the data row.
+        for (let C = 0; C <= SUMMARY_LAST_COL; C++) {
+            const cell = worksheet[XLSX.utils.encode_cell({ r: R, c: C })];
+            if (cell) mergeCellStyle(cell, LEFT_ALIGN);
+        }
+        // Currency number format applies only to the money columns.
         SUMMARY_MONEY_COLS.forEach((C) => {
             const cell = worksheet[XLSX.utils.encode_cell({ r: R, c: C })];
             if (!cell || typeof cell.v !== 'number') return;
             cell.z = fmt;
-            mergeCellStyle(cell, LEFT_ALIGN);
         });
     }
 
@@ -365,5 +375,3 @@ function fileDateStamp() {
     const pad = (n) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
-
-//I have integrated the sheet preview logic from export-preview_v3.js into export_data3.js, replacing the dummy dataset with live business data. Please review the implementation and flag any errors.
