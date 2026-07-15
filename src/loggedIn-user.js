@@ -1,4 +1,4 @@
-import { db, fetchUserProfile } from "./firebase";
+import { fetchUserProfile } from "./firebase";
 import { initInventoryForm } from './add_item_ui';
 import { allItems, loadAllItems, initializeSearch, initSort, initGlobalBarcodeListener } from './search_item';
 import { initializeOrderForm, initSubmitOrder, setTaxRate, scanAddItem, restoreOrderFromStorage } from "./order-add_item";

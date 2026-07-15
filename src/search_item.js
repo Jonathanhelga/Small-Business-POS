@@ -1,4 +1,4 @@
-import { auth, fetchInventory, db } from './firebase';
+import { auth, fetchInventory } from './firebase';
 // import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { renderItemGrid } from './item_ui';
 import { getCategories } from './categories';
