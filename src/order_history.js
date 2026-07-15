@@ -397,7 +397,7 @@ function removeFilter(key) {
 }
 
 function displayFilterValue(attr, value) {
-    if (attr.type === 'date') return prettifyDate(value);
+    if (attr.type === 'date') return `${prettifyDate(value)} or later`;
     if (attr.type === 'time') return `${prettifyTime(value)} or later`;
     return value;
 }
@@ -445,7 +445,7 @@ function renderSearchCount(count) {
 function orderMatchesFilter(order, filter) {
     const attr = filter.attr;
     if (attr.kind === 'fixed') {
-        if (attr.key === 'date') return orderDateKey(order.createdAt) === filter.value;
+        if (attr.key === 'date') return orderDateKey(order.createdAt) >= filter.value;
         return fixedText(order, attr.key).toLowerCase().includes(filter.value.toLowerCase());
     }
     const field = order.customFields ? order.customFields[attr.id] : null;
