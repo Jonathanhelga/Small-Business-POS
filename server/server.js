@@ -34,7 +34,16 @@ const verifyOtpLimiter = rateLimit({
     legacyHeaders: false,
 });
 
-app.use(cors());
+// Only the app's own frontends may call these endpoints from a browser.
+const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
+    : [
+        'https://minipos-d9d92.web.app',
+        'https://minipos-d9d92.firebaseapp.com',
+        'http://localhost:5173',
+    ];
+
+app.use(cors({ origin: allowedOrigins, methods: ['POST'] }));
 app.use(express.json());
 
 
