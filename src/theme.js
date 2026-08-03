@@ -11,11 +11,6 @@ function setTheme(theme) {
   }
 }
 
-export function toggleTheme() {
-  const next = document.documentElement.getAttribute('data-theme') === DARK ? LIGHT : DARK;
-  setTheme(next);
-}
-
 export function getCurrentTheme() {
   return document.documentElement.getAttribute('data-theme') || LIGHT;
 }

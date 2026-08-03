@@ -36,6 +36,7 @@ import { initCustomerCheckout } from './customer_checkout';
 import { initClock } from './clock';
 import { initThemeToggle } from './theme';
 import { showToast } from './toast';
+import { populateCurrencySelect } from './formatCurrency';
 function initLoggedInApp(user) {
     renderLoggedInState(user);
     initInsights(user);
@@ -63,6 +64,8 @@ function initLanding() {
 initLanding();
 
 document.addEventListener('DOMContentLoaded', function(){
+    populateCurrencySelect(document.getElementById('step-currency'));
+    populateCurrencySelect(document.getElementById('profile-currency'));
     eventDelegation('js-wizard__body');
     let initialized = false;
     onAuthStateChanged(auth, (user) => {

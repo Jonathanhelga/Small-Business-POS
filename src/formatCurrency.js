@@ -1,18 +1,18 @@
 const CURRENCY_CONFIG = {
-    IDR: { locale: 'id-ID', symbol: 'Rp',  fractionDigits: 0 },
-    USD: { locale: 'en-US', symbol: '$',   fractionDigits: 2 },
-    EUR: { locale: 'de-DE', symbol: '€',   fractionDigits: 2 },
-    GBP: { locale: 'en-GB', symbol: '£',   fractionDigits: 2 },
-    JPY: { locale: 'ja-JP', symbol: '¥',   fractionDigits: 0 },
-    SGD: { locale: 'en-SG', symbol: 'S$',  fractionDigits: 2 },
-    MYR: { locale: 'ms-MY', symbol: 'RM',  fractionDigits: 2 },
-    AUD: { locale: 'en-AU', symbol: 'A$',  fractionDigits: 2 },
-    CNY: { locale: 'zh-CN', symbol: '¥',   fractionDigits: 2 },
-    KRW: { locale: 'ko-KR', symbol: '₩',   fractionDigits: 0 },
-    THB: { locale: 'th-TH', symbol: '฿',   fractionDigits: 2 },
-    PHP: { locale: 'en-PH', symbol: '₱',   fractionDigits: 2 },
-    VND: { locale: 'vi-VN', symbol: '₫',   fractionDigits: 0 },
-    INR: { locale: 'en-IN', symbol: '₹',   fractionDigits: 2 },
+    IDR: { name: 'Indonesian Rupiah', locale: 'id-ID', symbol: 'Rp',  fractionDigits: 0 },
+    USD: { name: 'US Dollar', locale: 'en-US', symbol: '$',   fractionDigits: 2 },
+    EUR: { name: 'Euro', locale: 'de-DE', symbol: '€',   fractionDigits: 2 },
+    GBP: { name: 'British Pound', locale: 'en-GB', symbol: '£',   fractionDigits: 2 },
+    JPY: { name: 'Japanese Yen', locale: 'ja-JP', symbol: '¥',   fractionDigits: 0 },
+    SGD: { name: 'Singapore Dollar', locale: 'en-SG', symbol: 'S$',  fractionDigits: 2 },
+    MYR: { name: 'Malaysian Ringgit', locale: 'ms-MY', symbol: 'RM',  fractionDigits: 2 },
+    AUD: { name: 'Australian Dollar', locale: 'en-AU', symbol: 'A$',  fractionDigits: 2 },
+    CNY: { name: 'Chinese Yuan', locale: 'zh-CN', symbol: '¥',   fractionDigits: 2 },
+    KRW: { name: 'South Korean Won', locale: 'ko-KR', symbol: '₩',   fractionDigits: 0 },
+    THB: { name: 'Thai Baht', locale: 'th-TH', symbol: '฿',   fractionDigits: 2 },
+    PHP: { name: 'Philippine Peso', locale: 'en-PH', symbol: '₱',   fractionDigits: 2 },
+    VND: { name: 'Vietnamese Dong', locale: 'vi-VN', symbol: '₫',   fractionDigits: 0 },
+    INR: { name: 'Indian Rupee', locale: 'en-IN', symbol: '₹',   fractionDigits: 2 },
 };
 
 export function formatCurrency(amount, currencyCode = 'IDR') {
@@ -43,6 +43,18 @@ export function getExcelCurrencyFormat(currencyCode = 'IDR') {
     return `"${cfg.symbol}"#,##0${decimals}`;
 }
 
-export function getSupportedCurrencies() {
+export 
+function getSupportedCurrencies() {
     return Object.keys(CURRENCY_CONFIG);
+}
+
+export function populateCurrencySelect(selectEl){
+    if(!selectEl) return;
+    selectEl.replaceChildren();
+    for(const code of getSupportedCurrencies()){
+        const option = document.createElement('option');
+        option.value = code;
+        option.textContent = `${code} - ${CURRENCY_CONFIG[code].name}`;
+        selectEl.appendChild(option);
+    }
 }

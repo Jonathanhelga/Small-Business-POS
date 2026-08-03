@@ -432,8 +432,7 @@ function applyFilters() {
     renderOrderList(filtered);
 }
 
-// Show how many orders match the current filters. With no filters active this is
-// just the total; with filters it reads "N of M orders".
+// Show how many orders match the current filters. With no filters active this is just the total; with filters it reads "N of M orders".
 function renderSearchCount(count) {
     const el = document.getElementById('oh-search-count');
     if (!el) return;
