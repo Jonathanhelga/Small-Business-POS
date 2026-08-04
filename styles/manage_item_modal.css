@@ -266,6 +266,59 @@
 }
 .mi-field__input:focus { border-color: var(--clr-primary); }
 
+/*  Promotion block  */
+
+/* The usage count is a readout, not an input: only selling moves it. It is
+   styled as a quiet status row so it never reads as an editable field. */
+.mi-promo-usage {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 10px 13px;
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    background: var(--clr-bg-surface);
+}
+.mi-promo-usage__label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--clr-text-secondary);
+}
+.mi-promo-usage__value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--clr-text-primary);
+}
+.mi-promo-hint {
+    margin: 6px 0 0;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: var(--clr-text-secondary);
+}
+
+/* Clearing a promotion is a quiet text action, not a primary button: it only
+   empties the fields, and nothing is actually removed until Save Changes. */
+.mi-promo-remove {
+    align-self: flex-start;
+    margin-top: 4px;
+    padding: 4px 0;
+    border: none;
+    background: none;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--clr-danger);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.mi-promo-remove:disabled {
+    color: var(--clr-text-secondary);
+    opacity: 0.5;
+    cursor: default;
+    text-decoration: none;
+}
+
 /*  Input group: currency symbol prefix + input  */
 
 .mi-input-group {

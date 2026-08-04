@@ -121,7 +121,7 @@ function fullRender(){
         row.className = 'c-table__empty';
         const tableData = document.createElement('td');
         tableData.textContent = 'No Items Ordered Yet.';
-        tableData.colSpan = 3;
+        tableData.colSpan = 4;
         row.appendChild(tableData);
         tableBody.appendChild(row);
         return;
@@ -150,9 +150,12 @@ function appendRow(index){
     tdName.textContent = item.name;
     const tdQty = document.createElement('td');
     tdQty.textContent = item.quantity;
+    const tdDiscount = document.createElement('td');
+    tdDiscount.className = 'c-table__discount';
+    tdDiscount.textContent = '0%';
     const tdTotal = document.createElement('td');
     tdTotal.textContent = formatCurrency(item.price * item.quantity, currentCurrency());
-    row.append(tdName, tdQty, tdTotal);
+    row.append(tdName, tdQty, tdDiscount, tdTotal);
 
     tableBody.appendChild(row);
 } 
@@ -164,7 +167,7 @@ function updateRow(index){
         return;
     }
     row.cells[1].textContent = item.quantity;
-    row.cells[2].textContent = formatCurrency(item.price * item.quantity, currentCurrency());
+    row.cells[3].textContent = formatCurrency(item.price * item.quantity, currentCurrency());
 }
 
 function orderModifier(){
@@ -376,8 +379,6 @@ async function handleCheckoutFormSubmit(e) {
         }
     }
 
-    // Items added before costPrice existed have no cost recorded, so fall back to 0 rather than
-    // letting undefined reach Firestore, which rejects the whole batch.
     const mappedItems = orderedItems.map(item => ({
         id: item.id,
         name: item.name,
@@ -425,8 +426,6 @@ async function handleCheckoutFormSubmit(e) {
         return;
     }
 
-    // Best-effort: grow the reusable field library. A failure here must never
-    // surface as an order error — the order is already committed.
     saveOrderFieldDefinitions(fieldDefinitions, user.uid).catch(err =>
         console.error("Failed to save custom field definitions to library:", err)
     );

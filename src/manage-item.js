@@ -11,6 +11,7 @@ import { skeletonBar } from './skeleton';
 import { attachListKeyNav } from './listKeyNav';
 import { getCategories } from './categories';
 import { getItemCategories } from './item_categories';
+import { endOfDayMs, toDateInputValue, promoRemaining } from './promo';
 let filteredItems  = [];
 const selection    = createSelection();
 let selectedTheme  = 'primary';
@@ -216,6 +217,7 @@ function populateDetail(item) {
     document.getElementById('mi-edit-sell').value     = item.sellPrice == null ? '' : formatMoneyInput(String(item.sellPrice), currentCurrency());
     document.getElementById('mi-edit-min').value      = item.minStockLevel ?? '';
     document.getElementById('mi-edit-supplier').value = item.supplier ?? '';
+    fillPromoFields(item.promo);
     selectedCategories = new Set(getItemCategories(item));
     buildCategoryChips();
     setActiveTheme(item.tagColor || 'primary');
@@ -227,10 +229,118 @@ function populateDetail(item) {
     loadMetaHistory(item.id, false);
 }
 
+//  Promotion fields
+
+function promoInputs() {
+    return {
+        pct:   document.getElementById('mi-edit-promo-pct'),
+        ends:  document.getElementById('mi-edit-promo-ends'),
+        total: document.getElementById('mi-edit-promo-total'),
+        max:   document.getElementById('mi-edit-promo-max'),
+    };
+}
+
+function fillPromoFields(promo) {
+    const { pct, ends, total, max } = promoInputs();
+    pct.value   = promo?.discountPct ?? '';
+    ends.value  = toDateInputValue(promo?.endsAt);
+    total.value = promo?.totalLimit ?? '';
+    max.value   = promo?.maxDiscountedQty ?? '';
+
+    renderPromoUsage(promo);
+    document.getElementById('mi-promo-remove').disabled = !promo;
+}
+
+function clearPromoFields() {
+    const { pct, ends, total, max } = promoInputs();
+    pct.value = '';
+    ends.value = '';
+    total.value = '';
+    max.value = '';
+    renderPromoUsage(null);
+}
+
+// The count can lag: `allItems` is loaded once per modal open, so it reflects
+// the total as of that load. The order transaction is always exact; only this
+// display can trail behind sales made on another device.
+function renderPromoUsage(promo) {
+    const el = document.getElementById('mi-promo-usage');
+    if (!promo) {
+        el.textContent = '—';
+        return;
+    }
+    const used  = Number(promo.usedQty) || 0;
+    const limit = promo.totalLimit == null ? '∞' : promo.totalLimit;
+
+    let state = '';
+    if (promo.endsAt != null && Date.now() > Number(promo.endsAt)) state = ' (expired)';
+    else if (promoRemaining(promo) === 0) state = ' (sold out)';
+
+    el.textContent = `${used} / ${limit}${state}`;
+}
+
+// Read the four inputs back into a promo object.
+//
+// Returns { promo } on success or { error } with a message to show. A promo of
+// null means "this item has no promotion", which is also how one gets removed:
+// clear every field and save.
+function readPromoFromForm(existingPromo) {
+    const { pct, ends, total, max } = promoInputs();
+    const rawPct   = pct.value.trim();
+    const rawEnds  = ends.value.trim();
+    const rawTotal = total.value.trim();
+    const rawMax   = max.value.trim();
+
+    if (!rawPct && !rawEnds && !rawTotal && !rawMax) return { promo: null };
+
+    const discountPct = Number(rawPct);
+    if (!Number.isInteger(discountPct) || discountPct < 1 || discountPct > 100) {
+        return { error: 'Promotion discount must be a whole number between 1 and 100.' };
+    }
+
+    const maxDiscountedQty = Number(rawMax);
+    if (!Number.isInteger(maxDiscountedQty) || maxDiscountedQty < 1) {
+        return { error: 'Promotion "Max Per Order" must be a whole number of 1 or more.' };
+    }
+
+    const endsAt = endOfDayMs(rawEnds);
+    if (endsAt == null)     return { error: 'Promotion needs a "Valid Until" date.' };
+    if (endsAt < Date.now()) return { error: 'Promotion "Valid Until" date has already passed.' };
+
+    // Blank means unlimited, so only validate the total when one was typed.
+    let totalLimit = null;
+    if (rawTotal) {
+        totalLimit = Number(rawTotal);
+        if (!Number.isInteger(totalLimit) || totalLimit < 1) {
+            return { error: 'Promotion "Max Discounted Units" must be a whole number of 1 or more.' };
+        }
+    }
+
+    // usedQty belongs to the sales counter, never to this form. Editing a live
+    // promo carries its count forward; removing and re-adding one starts at 0.
+    return {
+        promo: {
+            discountPct,
+            maxDiscountedQty,
+            totalLimit,
+            endsAt,
+            usedQty: Number(existingPromo?.usedQty) || 0,
+        },
+    };
+}
+
 //  Change diffing
 
 function themeName(token) {
     return (THEMES.find(t => t.token === token) || {}).name || token || '—';
+}
+
+// usedQty is deliberately left out: it moves on every sale, and the history is
+// for changes the owner made, not for a running sales log.
+function fmtPromo(promo) {
+    if (!promo) return '(none)';
+    const total = promo.totalLimit == null ? 'unlimited' : `${promo.totalLimit} total`;
+    return `${promo.discountPct}% off, max ${promo.maxDiscountedQty}/order, ${total}, until ${formatTimestamp(promo.endsAt)}`;
 }
 
 function fmtCategories(list) {
@@ -251,6 +361,7 @@ function historyFieldSpecs(currencyCode) {
         { key: 'supplier',      label: 'Supplier',      format: v => (v && String(v).trim()) ? String(v).trim() : '(none)' },
         { key: 'categories',    label: 'Categories',    format: fmtCategories },
         { key: 'tagColor',      label: 'Theme',         format: v => themeName(v) },
+        { key: 'promo',         label: 'Promotion',     format: fmtPromo },
     ];
 }
 
@@ -296,7 +407,13 @@ async function handleSave() {
         return;
     }
 
-    const fields = { costPrice, sellPrice, minStockLevel, supplier, categories, tagColor };
+    const { promo, error: promoError } = readPromoFromForm(item.promo);
+    if (promoError) {
+        showFeedback(promoError, 'error');
+        return;
+    }
+
+    const fields = { costPrice, sellPrice, minStockLevel, supplier, categories, tagColor, promo };
 
     // Diff against the item's current (pre-save) values BEFORE we mutate `item`
     // below, so the history captures exactly what this save changed.
@@ -311,6 +428,10 @@ async function handleSave() {
         await updateItemData(item.id, fields);
         updateLocalItem(item.id, fields);
         Object.assign(item, fields);
+
+        // Re-sync the promo block so the usage readout and the Remove button
+        // reflect what was just saved (a removal disables the button).
+        fillPromoFields(item.promo);
 
         // Log a history entry only when something actually changed.
         if (changes.length > 0) {
@@ -339,6 +460,18 @@ async function handleSave() {
         btn.disabled    = false;
         btn.textContent = 'Save Changes';
     }
+}
+
+//  Remove promotion
+
+// Only empties the fields. Nothing is written until Save Changes, which is how
+// every other edit in this panel behaves, so there is nothing to confirm here
+// and nothing to undo beyond re-selecting the item.
+function handlePromoRemove() {
+    if (!selection.get()) return;
+    clearPromoFields();
+    document.getElementById('mi-promo-remove').disabled = true;
+    showFeedback('Promotion cleared. Press Save Changes to confirm.', 'success');
 }
 
 //  Delete item
@@ -508,6 +641,7 @@ export function initManageItem(user) {
 
     document.getElementById('mi-save-btn').addEventListener('click', handleSave);
     document.getElementById('mi-delete-btn').addEventListener('click', handleDelete);
+    document.getElementById('mi-promo-remove').addEventListener('click', handlePromoRemove);
 
     document.getElementById('mi-history-more').addEventListener('click', () => {
         if (historyItemId) loadMetaHistory(historyItemId, true);

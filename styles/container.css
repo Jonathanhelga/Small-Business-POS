@@ -130,16 +130,37 @@
     text-align: left;
     border: none;
 }
+
 .c-table td:first-child { word-break: break-word; }
 
-/* Order table: give Item Name the slack, pin Qty/Price to fixed widths
-   so long names don't get starved in the narrow sidebar (iPad). Scoped to
-   the sidebar's order table only — summary & sales tables are unaffected. */
 .l-sidebar__top .c-table { table-layout: fixed; }
+
+.l-sidebar__top .c-table th,
+.l-sidebar__top .c-table td { padding-inline: 0.4rem; }
+.l-sidebar__top .c-table th:first-child,
+.l-sidebar__top .c-table td:first-child { padding-inline-start: var(--pos-padding); }
+.l-sidebar__top .c-table th:last-child,
+.l-sidebar__top .c-table td:last-child { padding-inline-end: var(--pos-padding); }
+
+
 .l-sidebar__top .c-table th:nth-child(2),
-.l-sidebar__top .c-table td:nth-child(2) { width: 5rem; }
+.l-sidebar__top .c-table td:nth-child(2) { width: 16%; }
 .l-sidebar__top .c-table th:nth-child(3),
-.l-sidebar__top .c-table td:nth-child(3) { width: 6.5rem; }
+.l-sidebar__top .c-table td:nth-child(3) { width: 21%; }
+.l-sidebar__top .c-table th:nth-child(4),
+.l-sidebar__top .c-table td:nth-child(4) { width: 24%; }
+
+.l-sidebar__top .c-table th:nth-child(2),
+.l-sidebar__top .c-table td:nth-child(2),
+.l-sidebar__top .c-table th:nth-child(3),
+.l-sidebar__top .c-table td:nth-child(3) { text-align: center; }
+
+.l-sidebar__top .c-table .c-table__discount {
+    font-size: 0.8rem;
+    color: var(--clr-text-secondary);
+    white-space: nowrap;
+}
+
 .c-table__empty {
     font-size: 0.9rem;
     color: var(--clr-gray-mid);
