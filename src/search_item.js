@@ -187,6 +187,12 @@ export function updateLocalStock(itemId, quantityChange) {
     item.stockLevel = (item.stockLevel || 0) + quantityChange;
 }
 
+export function updateLocalPromoUsage(itemId, quantityChange) {
+    const item = allItems.find(i => i.id === itemId);
+    if (!item?.promo) return;
+    item.promo.usedQty = (Number(item.promo.usedQty) || 0) + quantityChange;
+}
+
 // Merge edited metadata fields into the canonical in-memory item so the grid
 // and other modules reflect the change without a full reload.
 export function updateLocalItem(itemId, fields) {

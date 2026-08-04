@@ -1,6 +1,6 @@
 import { toggleModal } from './modal-handler';
 import { formatCurrency, getCurrencySymbol } from "./formatCurrency";
-import { allItems, updateLocalStock } from "./search_item";
+import { allItems, updateLocalStock, updateLocalPromoUsage } from "./search_item";
 import { auth, submitOrder, upsertCustomerByPhone, saveOrderFieldDefinitions, getCachedUserProfile, getCurrentCurrency as currentCurrency } from "./firebase";
 import { refreshInsights } from './sales_insight';
 import {
@@ -11,6 +11,7 @@ import {
 } from './customer_checkout';
 import { showToast } from './toast';
 import { showConfirm } from './confirm_modal';
+import { discountedQty, promoSplit, promoLineTotal } from './promo';
 
 let orderedItems = [];
 let selectedRowIndex = -1;
@@ -68,21 +69,20 @@ export function initializeOrderForm(){
 }
 
 export function addItemToOrder(itemID, itemName, itemPrice, costPrice, itemQuantity){
-    const stockItem = allItems.find(i => i.id === itemID);
-    if (stockItem && itemQuantity > stockItem.stockLevel) {
-        showToast(`Only ${stockItem.stockLevel} ${stockItem.unit || 'units'} available`, 'error');
+    const itemInfo = allItems.find(i => i.id === itemID);
+    const itemPromo = itemInfo?.promo ?? null;
+    if (itemInfo && itemQuantity > itemInfo.stockLevel) {
+        showToast(`Only ${itemInfo.stockLevel} ${itemInfo.unit || 'units'} available`, 'error');
         return;
     }
     const existingIndex = orderedItems.findIndex(item => item.id === itemID);
     if(existingIndex !== -1){
         orderedItems[existingIndex].quantity = itemQuantity;
-        updateRow(existingIndex);
     }
     else{
-        orderedItems.push({id: itemID, name: itemName, price: itemPrice, costPrice: costPrice, quantity: itemQuantity });
-        appendRow(orderedItems.length - 1);
-        if(orderedItems.length === 1){ fullRender(); }
+        orderedItems.push({id: itemID, name: itemName, price: itemPrice, costPrice: costPrice, quantity: itemQuantity, promo: itemPromo});
     }
+    fullRender();
     updateTotals();
     persistOrder();
 }
@@ -94,9 +94,7 @@ export function scanAddItem(itemID){
 
     const existingIndex = orderedItems.findIndex(item => item.id === itemID);
     if(existingIndex === -1){
-        orderedItems.push({id: item.id, name: item.itemName, price: item.sellPrice, costPrice: item.costPrice, quantity: 1});
-        appendRow(orderedItems.length - 1);
-        if(orderedItems.length === 1){ fullRender(); }
+        orderedItems.push({id: item.id, name: item.itemName, price: item.sellPrice, costPrice: item.costPrice, quantity: 1, promo: item.promo ?? null});
     }
     else{
         const newQuantity = orderedItems[existingIndex].quantity + 1;
@@ -105,8 +103,8 @@ export function scanAddItem(itemID){
             return;
         }
         orderedItems[existingIndex].quantity = newQuantity;
-        updateRow(existingIndex);
     }
+    fullRender();
     updateTotals();
     persistOrder();
     showToast(`${item.itemName} added`);
@@ -115,8 +113,9 @@ export function scanAddItem(itemID){
 function fullRender(){
     const tableBody = document.getElementById('order-items');
     if(!tableBody) return;
+    tableBody.replaceChildren();
+
     if(orderedItems.length === 0){
-        tableBody.replaceChildren();
         const row = document.createElement('tr');
         row.className = 'c-table__empty';
         const tableData = document.createElement('td');
@@ -124,50 +123,65 @@ function fullRender(){
         tableData.colSpan = 4;
         row.appendChild(tableData);
         tableBody.appendChild(row);
-        return;
+    } else {
+        const fragment = document.createDocumentFragment();
+        displayRows().forEach(line => fragment.appendChild(buildRow(line)));
+        tableBody.appendChild(fragment);
     }
-    tableBody.replaceChildren();
-    orderedItems.forEach((_, index) => appendRow(index));
+    applySelectionStyles();
 }
 
-function appendRow(index){
-    const tableBody = document.getElementById('order-items');
-    if(!tableBody) return;
+// The cart holds one entry per item, but a partly-discounted item needs two
+// table rows: the units the promo covers, then the remainder at full price.
+// Both rows point back at the same cart entry through `index`, so clicking,
+// removing or editing either one acts on the whole item.
+function displayRows(){
+    const rows = [];
+    orderedItems.forEach((item, index) => {
+        const split = promoSplit(item.price, item.quantity, item.promo);
+        if(split.discountedQty > 0){
+            rows.push({ index, item, quantity: split.discountedQty, discountPct: split.discountPct, total: split.discountedTotal });
+        }
+        if(split.fullQty > 0 || split.discountedQty === 0){
+            rows.push({ index, item, quantity: split.fullQty, discountPct: 0, total: split.fullTotal });
+        }
+        rows[rows.length - 1].isLastOfItem = true;
+    });
+    return rows;
+}
 
-    const item = orderedItems[index];
+function buildRow(line){
     const row = document.createElement('tr');
-    row.id = rowIdFor(item.id)
+    row.dataset.itemIndex = String(line.index);
+    if(line.discountPct > 0) row.classList.add('c-table__row--promo');
+    if(line.isLastOfItem) row.classList.add('c-table__row--group-end');
 
-    row.style.cursor = 'pointer';
-
-    row.addEventListener('click', () => { handleRowClick(index, row); })
+    row.addEventListener('click', () => { handleRowClick(line.index); })
 
     row.addEventListener('dblclick', (e) => {
         e.stopPropagation();
-        openOrderItemModal(item.id)
+        openOrderItemModal(line.item.id)
     })
+
     const tdName = document.createElement('td');
-    tdName.textContent = item.name;
+    tdName.textContent = line.item.name;
     const tdQty = document.createElement('td');
-    tdQty.textContent = item.quantity;
+    tdQty.textContent = line.quantity;
     const tdDiscount = document.createElement('td');
     tdDiscount.className = 'c-table__discount';
-    tdDiscount.textContent = '0%';
+    tdDiscount.textContent = `${line.discountPct}%`;
     const tdTotal = document.createElement('td');
-    tdTotal.textContent = formatCurrency(item.price * item.quantity, currentCurrency());
+    tdTotal.textContent = formatCurrency(line.total, currentCurrency());
     row.append(tdName, tdQty, tdDiscount, tdTotal);
+    return row;
+}
 
-    tableBody.appendChild(row);
-} 
-function updateRow(index){
-    const item = orderedItems[index];
-    const row = document.getElementById(rowIdFor(item.id));
-    if(!row){
-        appendRow(index);
-        return;
-    }
-    row.cells[1].textContent = item.quantity;
-    row.cells[3].textContent = formatCurrency(item.price * item.quantity, currentCurrency());
+function lineTotal(item){
+    return promoLineTotal(item.price, item.quantity, item.promo);
+}
+
+export function getOrderSubtotal(){
+    return orderedItems.reduce((sum, item) => sum + lineTotal(item), 0);
 }
 
 function orderModifier(){
@@ -199,9 +213,6 @@ function removeSelectedItem(){
     fullRender();
     updateTotals();
     persistOrder();
-
-    const removeBtn = document.getElementById('js-order-remove');
-    if (removeBtn) removeBtn.disabled = true;
 }
 async function resetOrderTable() {                                                                                                            
     const ok = await showConfirm({                 
@@ -236,11 +247,8 @@ function persistOrder(){
     const key = storageKey();
     if(!key) return;
     try{
-        if(orderedItems.length === 0){
-            localStorage.removeItem(key);
-        } else {
-            localStorage.setItem(key, JSON.stringify(orderedItems));
-        }
+        if(orderedItems.length === 0){ localStorage.removeItem(key); } 
+        else { localStorage.setItem(key, JSON.stringify(orderedItems)); }
     } catch(err){
         console.error('Failed to persist order draft:', err);
     }
@@ -282,6 +290,7 @@ export function restoreOrderFromStorage(){
             name: live.itemName,
             price: live.sellPrice,
             costPrice: live.costPrice,
+            promo: live.promo ?? null,
             quantity,
         });
     });
@@ -301,7 +310,7 @@ function updateTotals(){
     let subtotal = 0;
     let totalQty = 0;
     orderedItems.forEach(item => {
-        subtotal += item.price * item.quantity;
+        subtotal += lineTotal(item);
         totalQty += item.quantity;
     });
     const taxAmount = subtotal * (taxRate / 100);
@@ -315,25 +324,32 @@ function updateTotals(){
     document.getElementById('order-tax-amount').textContent = `${symbol} ${formatCurrency(taxAmount, currency)}`;
     document.getElementById('order-with-tax').textContent = `${symbol} ${formatCurrency(totalWithTax, currency)}`;
 }
-function rowIdFor(itemID){ return `order-row-${itemID}`; }
+// Selection tracks the cart entry, not the row element, so a split item
+// highlights both of its rows and either one can be clicked to deselect.
+function handleRowClick(index){
+    selectedRowIndex = selectedRowIndex === index ? -1 : index;
+    applySelectionStyles();
+}
 
-let lastSelectedRow = null;
-function handleRowClick(index, rowElement){
+function applySelectionStyles(){
+    const tableBody = document.getElementById('order-items');
+    if(!tableBody) return;
+    Array.from(tableBody.rows).forEach(row => {
+        row.classList.toggle('selected', Number(row.dataset.itemIndex) === selectedRowIndex);
+    });
     const removeBtn = document.getElementById('js-order-remove');
+    if (removeBtn) removeBtn.disabled = selectedRowIndex === -1;
+    updateHint();
+}
 
-    if(lastSelectedRow === rowElement){
-        rowElement.classList.remove('selected');
-        selectedRowIndex  = -1;
-        lastSelectedRow = null;
-        if (removeBtn) removeBtn.disabled = true;
-        return;
-    }
-    if(lastSelectedRow) { lastSelectedRow.classList.remove('selected'); }
+function updateHint(){
+    const hint = document.getElementById('order-edit-hint');
+    if(!hint) return;
 
-    rowElement.classList.add('selected');
-    selectedRowIndex = index;
-    lastSelectedRow = rowElement;
-    if (removeBtn) removeBtn.disabled = false;
+    hint.hidden = orderedItems.length === 0;
+    hint.textContent = selectedRowIndex === -1
+        ? 'Click a row to select it'
+        : 'Double-click to edit quantity, Delete to remove';
 }
 
 export async function initSubmitOrder(){
@@ -379,16 +395,20 @@ async function handleCheckoutFormSubmit(e) {
         }
     }
 
+    // `subtotal` is what the line actually costs, promo included, so order
+    // history, insights and profit all read the discounted figure.
     const mappedItems = orderedItems.map(item => ({
         id: item.id,
         name: item.name,
         price: item.price,
         cost: item.costPrice ?? 0,
         quantity: item.quantity,
-        subtotal: item.price * item.quantity,
+        subtotal: lineTotal(item),
+        promoDiscountPct: discountedQty(item.promo, item.quantity) > 0 ? Number(item.promo.discountPct) : 0,
+        promoDiscountedQty: discountedQty(item.promo, item.quantity),
     }));
 
-    const subtotal = orderedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = mappedItems.reduce((sum, item) => sum + item.subtotal, 0);
     const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
     const taxAmount = subtotalAfterDiscount * (taxRate / 100);
     const totalWithTax = subtotalAfterDiscount + taxAmount;
@@ -431,14 +451,20 @@ async function handleCheckoutFormSubmit(e) {
     );
 
     try {
-        mappedItems.forEach(item => updateLocalStock(item.id, -item.quantity));
+        mappedItems.forEach(item => {
+            updateLocalStock(item.id, -item.quantity);
+            updateLocalPromoUsage(item.id, item.promoDiscountedQty);
+        });
         clearOrderTable();
         refreshInsights(user);
         closeCustomerCheckout();
         showToast('Order submitted successfully!');
     } catch (err) {
         console.error("Post-submit local update failed:", err);
-        mappedItems.forEach(item => updateLocalStock(item.id, item.quantity));
+        mappedItems.forEach(item => {
+            updateLocalStock(item.id, item.quantity);
+            updateLocalPromoUsage(item.id, -item.promoDiscountedQty);
+        });
         showToast('Order was submitted, but display failed to update. Please refresh.', 'error');
     } finally {
         setCheckoutSubmitting(false, "Submit Order");

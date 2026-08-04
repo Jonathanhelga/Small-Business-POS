@@ -46,8 +46,6 @@ function swatchFor(tagColor) {
     return TAG_SWATCH[tagColor] || 'var(--clr-border)';
 }
 
-// Build the theme swatch row once. Each swatch is a button so it styles
-// identically across browsers; clicking sets the in-memory selectedTheme.
 function buildThemeSwatches() {
     const container = document.getElementById('mi-edit-theme');
     const frag = document.createDocumentFragment();
@@ -102,8 +100,7 @@ function buildCategoryChips() {
 function toggleCategory(name) {
     if (selectedCategories.has(name)) selectedCategories.delete(name);
     else selectedCategories.add(name);
-    document.querySelector(`#mi-edit-categories .mi-chip[data-category="${name}"]`)
-        ?.classList.toggle('mi-chip--active');
+    document.querySelector(`#mi-edit-categories .mi-chip[data-category="${name}"]`)?.classList.toggle('mi-chip--active');
 }
 
 function formatTimestamp(ts) {
@@ -111,9 +108,7 @@ function formatTimestamp(ts) {
     // Firestore Timestamp has toDate(); fall back to raw Date/string.
     const date = typeof ts.toDate === 'function' ? ts.toDate() : new Date(ts);
     if (Number.isNaN(date.getTime())) return '—';
-    return new Intl.DateTimeFormat('id-ID', {
-        day: '2-digit', month: 'short', year: 'numeric',
-    }).format(date);
+    return new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric', }).format(date);
 }
 
 
@@ -265,10 +260,8 @@ function clearPromoFields() {
 // display can trail behind sales made on another device.
 function renderPromoUsage(promo) {
     const el = document.getElementById('mi-promo-usage');
-    if (!promo) {
-        el.textContent = '—';
-        return;
-    }
+    if (!promo) { el.textContent = '—'; return; }
+
     const used  = Number(promo.usedQty) || 0;
     const limit = promo.totalLimit == null ? '∞' : promo.totalLimit;
 
@@ -284,7 +277,7 @@ function renderPromoUsage(promo) {
 // Returns { promo } on success or { error } with a message to show. A promo of
 // null means "this item has no promotion", which is also how one gets removed:
 // clear every field and save.
-function readPromoFromForm(existingPromo) {
+function readPromoFromForm() {
     const { pct, ends, total, max } = promoInputs();
     const rawPct   = pct.value.trim();
     const rawEnds  = ends.value.trim();
@@ -316,16 +309,23 @@ function readPromoFromForm(existingPromo) {
         }
     }
 
-    // usedQty belongs to the sales counter, never to this form. Editing a live
-    // promo carries its count forward; removing and re-adding one starts at 0.
     return {
         promo: {
             discountPct,
             maxDiscountedQty,
             totalLimit,
             endsAt,
-            usedQty: Number(existingPromo?.usedQty) || 0,
         },
+    };
+}
+
+function promoWriteFields(promo) {
+    if (promo == null) return { promo: null };
+    return {
+        'promo.discountPct':      promo.discountPct,
+        'promo.maxDiscountedQty': promo.maxDiscountedQty,
+        'promo.totalLimit':       promo.totalLimit,
+        'promo.endsAt':           promo.endsAt,
     };
 }
 
@@ -335,8 +335,7 @@ function themeName(token) {
     return (THEMES.find(t => t.token === token) || {}).name || token || '—';
 }
 
-// usedQty is deliberately left out: it moves on every sale, and the history is
-// for changes the owner made, not for a running sales log.
+// usedQty is deliberately left out: it moves on every sale, and the history is for changes the owner made, not for a running sales log.
 function fmtPromo(promo) {
     if (!promo) return '(none)';
     const total = promo.totalLimit == null ? 'unlimited' : `${promo.totalLimit} total`;
@@ -407,7 +406,7 @@ async function handleSave() {
         return;
     }
 
-    const { promo, error: promoError } = readPromoFromForm(item.promo);
+    const { promo, error: promoError } = readPromoFromForm();
     if (promoError) {
         showFeedback(promoError, 'error');
         return;
@@ -425,9 +424,14 @@ async function handleSave() {
     btn.textContent = 'Saving...';
 
     try {
-        await updateItemData(item.id, fields);
-        updateLocalItem(item.id, fields);
-        Object.assign(item, fields);
+        const { promo: promoRules, ...rest } = fields;
+        await updateItemData(item.id, { ...rest, ...promoWriteFields(promoRules) });
+
+        // The local copy keeps a usedQty so the usage readout still renders. It
+        // is only ever a guess, which is why it never leaves this device.
+        const localFields = { ...fields, promo: promo && { ...promo, usedQty: Number(item.promo?.usedQty) || 0 } };
+        updateLocalItem(item.id, localFields);
+        Object.assign(item, localFields);
 
         // Re-sync the promo block so the usage readout and the Remove button
         // reflect what was just saved (a removal disables the button).

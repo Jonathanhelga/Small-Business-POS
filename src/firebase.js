@@ -125,10 +125,17 @@ export async function submitOrder(orderPayload, uid){
 
     for (const item of orderPayload.items) {
         const inventoryRef = doc(db, "inventory", item.id);
-        batch.update(inventoryRef, {
+        const updates = {
             stockLevel: increment(-item.quantity),
             lastUpdated: serverTimestamp(),
-        });
+        };
+        // Only the units that actually got the promo price count against its
+        // lifetime limit, so a partly-discounted line increments by less than
+        // its quantity.
+        if (item.promoDiscountedQty > 0) {
+            updates['promo.usedQty'] = increment(item.promoDiscountedQty);
+        }
+        batch.update(inventoryRef, updates);
     }
 
     await batch.commit();

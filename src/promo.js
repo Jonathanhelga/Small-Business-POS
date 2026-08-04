@@ -45,4 +45,33 @@ export function isPromoActive(promo, now = Date.now()) {
     return promoRemaining(promo) > 0;
 }
 
+// How many units of a line actually get the promo price. Two ceilings apply:
+export function discountedQty(promo, quantity, now = Date.now()) {
+    if (!isPromoActive(promo, now)) return 0;
+    return Math.min(quantity, Number(promo.maxDiscountedQty), promoRemaining(promo));
+}
+
+// Cut a line into its discounted half and its full-price half. A line of 7 with
+// a 20% promo capped at 5 comes back as 5 discounted units + 2 at full price.
+// Both halves are always returned, so callers can render or total them without repeating the arithmetic.
+export function promoSplit(price, quantity, promo, now = Date.now()) {
+    const discounted = discountedQty(promo, quantity, now);
+    const discountPct = discounted > 0 ? Number(promo.discountPct) : 0;
+    const unitAfterDiscount = price * (1 - discountPct / 100);
+    return {
+        discountPct,
+        discountedQty: discounted,
+        discountedTotal: unitAfterDiscount * discounted,
+        fullQty: quantity - discounted,
+        fullTotal: price * (quantity - discounted),
+    };
+}
+
+// Line total with the discount applied to the eligible units only; the rest of
+// the line stays at full price.
+export function promoLineTotal(price, quantity, promo, now = Date.now()) {
+    const split = promoSplit(price, quantity, promo, now);
+    return split.discountedTotal + split.fullTotal;
+}
+
 

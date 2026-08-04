@@ -1,6 +1,7 @@
 import { toggleModal } from './modal-handler';
 import { formatCurrency, getCurrencySymbol } from './formatCurrency';
-import { getOrderedItems, getTaxRate } from './order-add_item';
+import { getOrderedItems, getOrderSubtotal, getTaxRate } from './order-add_item';
+import { promoSplit } from './promo';
 import { auth, fetchCustomers, getCachedUserProfile, fetchUserProfile, getCurrentCurrency as currentCurrency } from './firebase';
 import { initCustomFields, resetCustomFields, collectCustomFields, collectFieldDefinitions, renderSavedFields } from './checkout_custom_fields';
 
@@ -43,8 +44,7 @@ async function populateSavedFields() {
 }
 
 export function getCheckoutFormData() {
-    const items = getOrderedItems();
-    const subtotal = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
+    const subtotal = getOrderSubtotal();
     const discountPct = clampDiscount(Number(document.getElementById('js-checkout-discount')?.value) || 0);
     const discountAmount = subtotal * (discountPct / 100);
     const selectedId = document.getElementById('js-checkout-customer-select')?.value || '';
@@ -157,9 +157,18 @@ function renderOrderRecap() {
 
 function buildRecapRow(item) {
     const tr = document.createElement('tr');
+    const split = promoSplit(item.price, item.quantity, item.promo);
 
     const nameTd = document.createElement('td');
     nameTd.textContent = item.name;
+    if (split.discountedQty > 0) {
+        const note = document.createElement('span');
+        note.className = 'c-checkout__recap-promo';
+        note.textContent = split.discountedQty === item.quantity
+            ? `${split.discountPct}% off`
+            : `${split.discountPct}% off on ${split.discountedQty} of ${item.quantity}`;
+        nameTd.appendChild(note);
+    }
 
     const qtyTd = document.createElement('td');
     qtyTd.className = 'c-checkout__col-qty';
@@ -167,7 +176,7 @@ function buildRecapRow(item) {
 
     const subtotalTd = document.createElement('td');
     subtotalTd.className = 'c-checkout__col-subtotal';
-    subtotalTd.textContent = formatCurrency(item.price * item.quantity, currentCurrency());
+    subtotalTd.textContent = formatCurrency(split.discountedTotal + split.fullTotal, currentCurrency());
 
     tr.appendChild(nameTd);
     tr.appendChild(qtyTd);
@@ -181,8 +190,7 @@ function resetDiscount() {
 }
 
 function recalcTotals() {
-    const items = getOrderedItems();
-    const subtotal = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
+    const subtotal = getOrderSubtotal();
 
     const discountInput = document.getElementById('js-checkout-discount');
     const discountPct = clampDiscount(Number(discountInput?.value) || 0);
