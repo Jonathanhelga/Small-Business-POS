@@ -109,7 +109,7 @@
 .c-checkout__recap tbody tr:last-child td { border-bottom: none; }
 
 .c-checkout__col-qty,
-.c-checkout__col-subtotal { text-align: right; }
+.c-checkout__col-subtotal { text-align: left; }
 .c-checkout__col-qty { width: 4rem; }
 .c-checkout__col-subtotal { width: 8rem; font-variant-numeric: tabular-nums; }
 

@@ -49,6 +49,7 @@ function setupToolBar(){
         document.getElementById('js-sales-from').value = todayInputValue();
         document.getElementById('js-sales-to').value = todayInputValue();
         toggleModal('sales-insights-modal');
+        toggleModal('features-modal');
     });
     const chips = document.querySelectorAll('.c-chip');
     chips.forEach(chip => {

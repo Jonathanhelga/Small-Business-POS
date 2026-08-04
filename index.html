@@ -479,8 +479,8 @@
               <div class="order-form-content">
                 <div id="item-information">
                     <h1 id="order-item-title">Item Detail</h1>
-                    <h3 id="order-item-sku">SKU-00001</h3>
-                    <h3 id="order-item-name">Item 1</h3>
+                    <h3 id="order-item-sku"></h3>
+                    <h3 id="order-item-name"></h3>
                 </div>
                 <div class="c-detail">
                   <h3>Price: <span id="order-item-price"></span></h3>
@@ -1031,6 +1031,44 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Promotion: an item-level discount that applies automatically
+                   at checkout. Leave every field blank for no promotion. -->
+              <div class="mi-edit">
+                <span class="mi-edit__title">Promotion</span>
+                <div class="mi-edit__grid">
+                  <div class="mi-field">
+                    <label class="mi-field__label" for="mi-edit-promo-pct">Discount (%)</label>
+                    <input type="number" id="mi-edit-promo-pct" class="mi-field__input" min="1" max="100" step="1" placeholder="e.g., 20" />
+                  </div>
+                  <div class="mi-field">
+                    <label class="mi-field__label" for="mi-edit-promo-ends">Valid Until</label>
+                    <input type="date" id="mi-edit-promo-ends" class="mi-field__input" />
+                  </div>
+                  <div class="mi-field">
+                    <label class="mi-field__label" for="mi-edit-promo-total">Max Discounted Units (Total)</label>
+                    <input type="number" id="mi-edit-promo-total" class="mi-field__input" min="1" step="1" placeholder="Blank = unlimited" />
+                  </div>
+                  <div class="mi-field">
+                    <label class="mi-field__label" for="mi-edit-promo-max">Max Per Order</label>
+                    <input type="number" id="mi-edit-promo-max" class="mi-field__input" min="1" step="1" placeholder="e.g., 2" />
+                  </div>
+                  <div class="mi-field mi-field--full">
+                    <div class="mi-promo-usage">
+                      <span class="mi-promo-usage__label">Used so far</span>
+                      <span class="mi-promo-usage__value" id="mi-promo-usage">—</span>
+                    </div>
+                    <p class="mi-promo-hint">
+                      The discount applies on its own at checkout, up to the per-order limit,
+                      until either the total runs out or the date passes.
+                    </p>
+                    <button type="button" id="mi-promo-remove" class="mi-promo-remove" disabled>
+                      Remove Promotion
+                    </button>
+                  </div>
+                </div>
+              </div>
+
                 <p id="mi-feedback" class="mi-feedback"></p>
 
               <div class="mi-history">
@@ -1429,6 +1467,7 @@
               <tr>
                 <th>Item Name</th>
                 <th>Quantity</th>
+                <th>Discount</th>
                 <th>Price</th>
               </tr>
             </thead>

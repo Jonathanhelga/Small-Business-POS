@@ -27,6 +27,13 @@ export function getCurrencySymbol(currencyCode = 'IDR') {
     return (CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR).symbol;
 }
 
+// How many decimal places this currency uses (IDR 0, USD 2). Money maths that
+// must land on a real payable amount rounds to this, rather than leaving
+// fractions of a rupiah floating around in a subtotal.
+export function getCurrencyFractionDigits(currencyCode = 'IDR') {
+    return (CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR).fractionDigits;
+}
+
 export function getCurrencySeparators(currencyCode = 'IDR') {
     const cfg = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR;
     const parts = new Intl.NumberFormat(cfg.locale).formatToParts(11111.1);
@@ -43,8 +50,7 @@ export function getExcelCurrencyFormat(currencyCode = 'IDR') {
     return `"${cfg.symbol}"#,##0${decimals}`;
 }
 
-export 
-function getSupportedCurrencies() {
+export function getSupportedCurrencies() {
     return Object.keys(CURRENCY_CONFIG);
 }
 
