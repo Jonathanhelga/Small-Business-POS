@@ -113,6 +113,12 @@
 .c-checkout__col-qty { width: 4rem; }
 .c-checkout__col-subtotal { width: 8rem; font-variant-numeric: tabular-nums; }
 
+.c-checkout__recap-promo {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--clr-text-secondary);
+}
+
 .c-checkout__recap-empty {
     text-align: center;
     color: var(--clr-text-secondary);

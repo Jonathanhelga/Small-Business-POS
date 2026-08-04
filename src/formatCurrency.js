@@ -15,12 +15,21 @@ const CURRENCY_CONFIG = {
     INR: { name: 'Indian Rupee', locale: 'en-IN', symbol: '₹',   fractionDigits: 2 },
 };
 
+// Building an Intl.NumberFormat costs ~50x more than using one, and this runs
+// once per money value on every table render. One formatter per currency.
+const formatterCache = new Map();
+
 export function formatCurrency(amount, currencyCode = 'IDR') {
-    const cfg = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR;
-    return new Intl.NumberFormat(cfg.locale, {
-        minimumFractionDigits: cfg.fractionDigits,
-        maximumFractionDigits: cfg.fractionDigits,
-    }).format(amount ?? 0);
+    let formatter = formatterCache.get(currencyCode);
+    if (!formatter) {
+        const cfg = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR;
+        formatter = new Intl.NumberFormat(cfg.locale, {
+            minimumFractionDigits: cfg.fractionDigits,
+            maximumFractionDigits: cfg.fractionDigits,
+        });
+        formatterCache.set(currencyCode, formatter);
+    }
+    return formatter.format(amount ?? 0);
 }
 
 export function getCurrencySymbol(currencyCode = 'IDR') {
