@@ -146,6 +146,59 @@ function renderOrderList(orders) {
     });
 }
 
+// One receipt line, printed the way a real till prints it: the name on its own
+// line so it can wrap, then an indented "qty x price ..... total" line at the
+// item's FULL price, with any promo shown below as a subtraction.
+function buildBillItemRow(item, currency) {
+    const row = document.createElement('div');
+    row.className = 'oh-bill__item-row';
+
+    const itemName = document.createElement('div');
+    itemName.className = 'oh-bill__item-name';
+    itemName.textContent = item.name;
+    row.appendChild(itemName);
+
+    const price = Number(item.price) || 0;
+    const quantity = Number(item.quantity) || 0;
+    const full = price * quantity;
+
+    row.appendChild(billLine(
+        'oh-bill__item-line',
+        `${quantity} x ${formatCurrency(price, currency)}`,
+        formatCurrency(full, currency)
+    ));
+
+    // Derived from the stored subtotal rather than re-running the promo math, so
+    // it can't drift from what was charged. Orders written before promos existed
+    // have subtotal === full, so they land on zero and render no promo line.
+    const saving = full - Number(item.subtotal ?? full);
+    if (saving > 0.005) {
+        const pct = Number(item.promoDiscountPct) || 0;
+        row.appendChild(billLine(
+            'oh-bill__item-promo',
+            pct > 0 ? `promo -${pct}%` : 'promo',
+            `- ${formatCurrency(saving, currency)}`
+        ));
+    }
+
+    return row;
+}
+
+// Indented label-left / amount-right line inside an item row.
+function billLine(className, label, amount) {
+    const line = document.createElement('div');
+    line.className = className;
+
+    const labelSpan = document.createElement('span');
+    labelSpan.textContent = label;
+
+    const amountSpan = document.createElement('span');
+    amountSpan.textContent = amount;
+
+    line.append(labelSpan, amountSpan);
+    return line;
+}
+
 async function viewOrderDetails(order, cardEl) {
     currentOrder = order;
     const itemsList = document.getElementById('oh-items-list');
@@ -162,27 +215,7 @@ async function viewOrderDetails(order, cardEl) {
     (order.items || []).forEach(item => {
         totalItems += Number(item.quantity);
 
-        const row = document.createElement('div');
-        row.className = 'oh-bill__item-row';
-        const itemName = document.createElement('div');
-        itemName.className = 'oh-bill__item-name';
-        itemName.textContent = item.name;
-
-        const itemQuantity = document.createElement('div');
-        itemQuantity.textContent = item.quantity;
-
-        const itemPrice = document.createElement('div');
-        itemPrice.textContent = formatCurrency(item.price, currency);
-
-        const itemSubtotal = document.createElement('div');
-        itemSubtotal.textContent = formatCurrency(item.subtotal, currency);
-
-        row.appendChild(itemName);
-        row.appendChild(itemQuantity);
-        row.appendChild(itemPrice);
-        row.appendChild(itemSubtotal);
-
-        itemsList.appendChild(row);
+        itemsList.appendChild(buildBillItemRow(item, currency));
     });
 
     document.getElementById('oh-total-items').textContent = totalItems;

@@ -310,11 +310,15 @@
     font-family: 'Courier New', monospace;
 }
 
-/* Receipt paper */
+/* Receipt paper. Thermal paper is white and prints in a single ink colour, so
+   everything inside the receipt uses --bill-ink rather than the app's text
+   tokens. That also keeps the paper look upright when the app is in dark mode. */
 #oh-bill-preview {
+    --bill-ink: #1f2937;
     max-width: 400px;
     margin: 0 auto;
-    background: rgb(253, 255, 216);
+    background: #fff;
+    color: var(--bill-ink);
     padding: 30px 30px 50px 30px;
     line-height: 1.5;
     transform: scale(var(--bill-zoom, 1));
@@ -322,17 +326,10 @@
     transition: transform 0.15s ease;
 }
 
-/* Receipt stays light-on-cream regardless of app theme so the printed-paper look doesn't invert */
-[data-theme="dark"] #oh-bill-preview {
-    --clr-text-primary: #1f2937;
-    --clr-text-secondary: #6b7280;
-    color: var(--clr-text-primary);
-}
-
 /* Bill header */
 .oh-bill__header {
     text-align: center;
-    border-bottom: 2px solid #000;
+    border-bottom: 3px double var(--bill-ink);
     padding-bottom: 20px;
     margin-bottom: 20px;
 }
@@ -345,13 +342,11 @@
 
 .oh-bill__tagline {
     font-size: 0.75rem;
-    color: var(--clr-text-secondary);
     margin-top: 2px;
 }
 
 .oh-bill__shop-details {
     font-size: 0.72rem;
-    color: var(--clr-text-secondary);
     margin-top: 6px;
     line-height: 1.5;
 }
@@ -360,7 +355,7 @@
 .oh-bill__meta {
     display: flex;
     justify-content: space-between;
-    border-bottom: 1px dashed #ccc;
+    border-bottom: 1px dashed var(--bill-ink);
     padding-bottom: 20px;
     margin-bottom: 20px;
     font-size: 0.75rem;
@@ -369,37 +364,31 @@
 .oh-bill__invoice { font-weight: 600; }
 .oh-bill__meta-right { text-align: right; }
 
-/* Items table */
+/* Items. Each item is two lines: the name on its own line so it can wrap in
+   full, then an indented qty/price line. No column headers, no per-row rule. */
 .oh-bill__items { width: 100%; margin-bottom: 20px; }
 
-.oh-bill__items-header,
 .oh-bill__item-row {
-    display: grid;
-    grid-template-columns: 2fr 0.7fr 1.2fr 1.2fr;
-    gap: 6px;
-    padding: 6px 0;
     font-size: 0.75rem;
+    margin-bottom: 6px;
 }
-
-.oh-bill__items-header {
-    font-weight: 700;
-    border-bottom: 1px solid #000;
-    margin-bottom: 4px;
-}
-
-.oh-bill__item-row { border-bottom: 1px dotted #ccc; }
-.oh-bill__item-row:last-child { border-bottom: none; }
 
 .oh-bill__item-name {
     font-size: 0.75rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
+}
+
+.oh-bill__item-line,
+.oh-bill__item-promo {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding-left: 1.5ch;
 }
 
 /* Summary */
 .oh-bill__summary {
-    border-top: 2px solid #000;
+    border-top: 1px dashed var(--bill-ink);
     padding-top: 15px;
     margin-top: 15px;
     margin-bottom: 12px;
@@ -416,27 +405,23 @@
     display: flex;
     justify-content: space-between;
     font-weight: 700;
-    font-size: 0.875rem;
-    border-top: 2px solid #000;
+    font-size: 1.05rem;
+    border-top: 3px double var(--bill-ink);
     margin-top: 8px;
-    padding-top: 8px;
+    padding-top: 10px;
 }
 
-/* Receipt footer */
+/* Receipt footer. Separated by whitespace rather than another rule. */
 .oh-bill__footer {
     text-align: center;
     font-size: 0.7rem;
-    color: var(--clr-text-secondary);
-    border-top: 1px solid #000;
-    margin-top: 25px;
-    padding-top: 20px;
+    margin-top: 24px;
     line-height: 1.8;
 }
 
 .oh-bill__thankyou {
     font-weight: 700;
     font-size: 0.8rem;
-    color: var(--clr-text-primary);
     margin-bottom: 4px;
 }
 
