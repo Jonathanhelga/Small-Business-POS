@@ -174,9 +174,23 @@ function buildBillItemRow(item, currency) {
     const saving = full - Number(item.subtotal ?? full);
     if (saving > 0.005) {
         const pct = Number(item.promoDiscountPct) || 0;
+        const discountedQty = Number(item.promoDiscountedQty) || 0;
+
+        let label = 'promo';
+        if (pct > 0) {
+            // The "n of m" half only earns its place when the promo cap actually
+            // bit, otherwise it is noise on a line where every unit was discounted.
+            // A zero means the order predates the promoDiscountedQty field, so
+            // fall back to the bare percentage rather than printing "0 of 10".
+            const capped = discountedQty > 0 && discountedQty < quantity;
+            label = capped
+                ? `${pct}% off, ${discountedQty} of ${quantity}`
+                : `${pct}% off`;
+        }
+
         row.appendChild(billLine(
             'oh-bill__item-promo',
-            pct > 0 ? `promo -${pct}%` : 'promo',
+            label,
             `- ${formatCurrency(saving, currency)}`
         ));
     }
