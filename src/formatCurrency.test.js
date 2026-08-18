@@ -6,6 +6,7 @@ import {
     getCurrencySeparators,
     getExcelCurrencyFormat,
     getSupportedCurrencies,
+    roundToCurrency,
 } from './formatCurrency';
 
 describe('formatCurrency', () => {
@@ -82,6 +83,26 @@ describe('getExcelCurrencyFormat', () => {
 
     it('builds a two-decimal excel format for USD', () => {
         expect(getExcelCurrencyFormat('USD')).toBe('"$"#,##0.00');
+    });
+});
+
+describe('roundToCurrency', () => {
+    it('rounds IDR (0 fraction digits) to the nearest whole rupiah', () => {
+        expect(roundToCurrency(1234.5, 'IDR')).toBe(1235);
+        expect(roundToCurrency(1234.4, 'IDR')).toBe(1234);
+    });
+
+    it('rounds USD (2 fraction digits) to the nearest cent', () => {
+        expect(roundToCurrency(19.995, 'USD')).toBe(20);
+        expect(roundToCurrency(19.994, 'USD')).toBe(19.99);
+    });
+
+    it('leaves already-precise values unchanged', () => {
+        expect(roundToCurrency(15000, 'IDR')).toBe(15000);
+    });
+
+    it('defaults to IDR when no currency code is given', () => {
+        expect(roundToCurrency(10.5)).toBe(11);
     });
 });
 

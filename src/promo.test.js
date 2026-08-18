@@ -128,6 +128,20 @@ describe('promoSplit', () => {
         expect(split.fullQty).toBe(4);
         expect(split.fullTotal).toBe(40000);
     });
+
+    it('rounds IDR totals to whole rupiah instead of leaving fractional drift', () => {
+        // 15000 * (1 - 33/100) = 10050 exactly, but 15001 does not divide cleanly.
+        const promo = activePromo({ discountPct: 33, maxDiscountedQty: 1, totalLimit: 100 });
+        const split = promoSplit(15001, 1, promo, 'IDR');
+        expect(Number.isInteger(split.discountedTotal)).toBe(true);
+        expect(split.discountedTotal).toBe(Math.round(15001 * 0.67));
+    });
+
+    it('rounds USD totals to the nearest cent', () => {
+        const promo = activePromo({ discountPct: 15, maxDiscountedQty: 1, totalLimit: 100 });
+        const split = promoSplit(19.99, 1, promo, 'USD');
+        expect(split.discountedTotal).toBe(16.99);
+    });
 });
 
 describe('promoLineTotal', () => {

@@ -1,5 +1,5 @@
 import { toggleModal } from './modal-handler';
-import { formatCurrency, getCurrencySymbol } from "./formatCurrency";
+import { formatCurrency, getCurrencySymbol, roundToCurrency } from "./formatCurrency";
 import { allItems, updateLocalStock, updateLocalPromoUsage } from "./search_item";
 import { auth, submitOrder, upsertCustomerByPhone, saveOrderFieldDefinitions, getCachedUserProfile, getCurrentCurrency as currentCurrency } from "./firebase";
 import { refreshInsights } from './sales_insight';
@@ -138,7 +138,7 @@ function fullRender(){
 function displayRows(){
     const rows = [];
     orderedItems.forEach((item, index) => {
-        const split = promoSplit(item.price, item.quantity, item.promo);
+        const split = promoSplit(item.price, item.quantity, item.promo, currentCurrency());
         if(split.discountedQty > 0){
             rows.push({ index, item, quantity: split.discountedQty, discountPct: split.discountPct, total: split.discountedTotal });
         }
@@ -177,7 +177,7 @@ function buildRow(line){
 }
 
 function lineTotal(item){
-    return promoLineTotal(item.price, item.quantity, item.promo);
+    return promoLineTotal(item.price, item.quantity, item.promo, currentCurrency());
 }
 
 export function getOrderSubtotal(){
@@ -408,10 +408,11 @@ async function handleCheckoutFormSubmit(e) {
         promoDiscountedQty: discountedQty(item.promo, item.quantity),
     }));
 
+    const currency = getCachedUserProfile()?.currency || 'IDR';
     const subtotal = mappedItems.reduce((sum, item) => sum + item.subtotal, 0);
-    const subtotalAfterDiscount = Math.max(0, subtotal - discountAmount);
-    const taxAmount = subtotalAfterDiscount * (taxRate / 100);
-    const totalWithTax = subtotalAfterDiscount + taxAmount;
+    const subtotalAfterDiscount = roundToCurrency(Math.max(0, subtotal - discountAmount), currency);
+    const taxAmount = roundToCurrency(subtotalAfterDiscount * (taxRate / 100), currency);
+    const totalWithTax = roundToCurrency(subtotalAfterDiscount + taxAmount, currency);
 
     const orderPayload = {
         items: mappedItems,
@@ -423,7 +424,7 @@ async function handleCheckoutFormSubmit(e) {
         taxRate,
         taxAmount,
         totalPrice: totalWithTax,
-        currency: getCachedUserProfile()?.currency || 'IDR',
+        currency,
         customerId: customerId || null,
         customer: customerSnapshot,
         orderNote,

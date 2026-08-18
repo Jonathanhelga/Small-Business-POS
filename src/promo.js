@@ -9,6 +9,8 @@ a promo lives on the inventory item as `item.promo` and has four rules and 1 cou
 5. usedQty
 */
 
+import { roundToCurrency } from './formatCurrency';
+
 export function endOfDayMs(dateString) {
     if (!dateString) return null;
     const [year, month, day] = String(dateString).split('-').map(Number);
@@ -54,24 +56,27 @@ export function discountedQty(promo, quantity, now = Date.now()) {
 // Cut a line into its discounted half and its full-price half. A line of 7 with
 // a 20% promo capped at 5 comes back as 5 discounted units + 2 at full price.
 // Both halves are always returned, so callers can render or total them without repeating the arithmetic.
-export function promoSplit(price, quantity, promo, now = Date.now()) {
+// Both totals are rounded to the currency's smallest unit (IDR whole rupiah,
+// USD cents, ...) so a percentage discount never leaves fractional-unit drift
+// in a value that gets stored or summed into an order total.
+export function promoSplit(price, quantity, promo, currencyCode = 'IDR', now = Date.now()) {
     const discounted = discountedQty(promo, quantity, now);
     const discountPct = discounted > 0 ? Number(promo.discountPct) : 0;
     const unitAfterDiscount = price * (1 - discountPct / 100);
     return {
         discountPct,
         discountedQty: discounted,
-        discountedTotal: unitAfterDiscount * discounted,
+        discountedTotal: roundToCurrency(unitAfterDiscount * discounted, currencyCode),
         fullQty: quantity - discounted,
-        fullTotal: price * (quantity - discounted),
+        fullTotal: roundToCurrency(price * (quantity - discounted), currencyCode),
     };
 }
 
 // Line total with the discount applied to the eligible units only; the rest of
 // the line stays at full price.
-export function promoLineTotal(price, quantity, promo, now = Date.now()) {
-    const split = promoSplit(price, quantity, promo, now);
-    return split.discountedTotal + split.fullTotal;
+export function promoLineTotal(price, quantity, promo, currencyCode = 'IDR', now = Date.now()) {
+    const split = promoSplit(price, quantity, promo, currencyCode, now);
+    return roundToCurrency(split.discountedTotal + split.fullTotal, currencyCode);
 }
 
 

@@ -1,4 +1,4 @@
-import { submitItemData, auth, getCachedUserProfile } from "./firebase";
+import { submitItemData, reserveNextSku, auth, getCachedUserProfile } from "./firebase";
 import { getCurrencySymbol } from './formatCurrency';
 import { attachMoneyInput, parseMoneyInput } from './moneyInput';
 import { addSingleItem, allItems } from "./search_item";
@@ -11,13 +11,22 @@ let currencyCode = 'IDR';
 
 function currentCurrency() { return currencyCode; }
 
-function generateNextSku(items) {
+// Highest existing auto-format SKU number in the in-memory item cache, or 0 if
+// none. Used both to preview the next SKU and, at actual save time, to seed
+// reserveNextSku()'s counter the first time it's used for this owner.
+function highestSkuSeq(items) {
     const numbers = items
         .map(i => /^SKU-(\d+)$/.exec(i.sku))
         .filter(Boolean)
         .map(m => parseInt(m[1], 10));
-    const next = numbers.length ? Math.max(...numbers) + 1 : 1;
-    return `SKU-${String(next).padStart(5, '0')}`;
+    return numbers.length ? Math.max(...numbers) : 0;
+}
+
+// Instant preview only — the in-memory cache can be stale across tabs/devices,
+// so this is not what actually gets saved. See reserveNextSku() in firebase.js
+// for the transactionally-unique SKU used at submit time.
+function generateNextSku(items) {
+    return `SKU-${String(highestSkuSeq(items) + 1).padStart(5, '0')}`;
 }
 
 function formatPrice(value) {
@@ -161,9 +170,26 @@ export function initInventoryForm() {
         const originalText = submitBtn.textContent;
         submitBtn.disabled = true;
         submitBtn.textContent = "Saving Item...";
+
+        // The input just shows a preview when auto-SKU is on; reserve the real,
+        // transactionally-unique SKU now so two concurrent adds can't save the
+        // same number (see reserveNextSku in firebase.js).
+        let sku = document.getElementById('sku').value.trim().toUpperCase();
+        if (skuAutoCheckbox.checked) {
+            try {
+                sku = await reserveNextSku(user.uid, highestSkuSeq(allItems));
+            } catch (err) {
+                console.error("Failed to reserve SKU:", err);
+                showToast(`Failed to save: ${err.message}`, 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+                return;
+            }
+        }
+
         const formData = {
             tagColor: document.getElementById('tag-color').value,
-            sku: document.getElementById('sku').value.trim().toUpperCase(),
+            sku,
             itemName: document.getElementById('item-name').value.trim(),
             costPrice: cost.value,
             sellPrice: sell.value,
