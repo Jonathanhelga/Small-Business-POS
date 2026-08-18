@@ -1,4 +1,3 @@
-import { toggleModal } from './modal-handler';
 import { openOrderItemModal } from "./order-add_item";
 
 export function createItemButton(container, item){

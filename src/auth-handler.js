@@ -1,4 +1,4 @@
-import { auth, loginUser, LogOutUser, registerUser, submitSettingsData, fetchUserProfile } from "./firebase";
+import { auth, loginUser, registerUser, submitSettingsData, fetchUserProfile } from "./firebase";
 import { showToast } from "./toast";
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 let emailFinal = '';
@@ -128,7 +128,7 @@ function ifButtonIsClicked(){
                 buttonVerification.disabled = false;
                 buttonVerification.classList.add('is-active');
             }
-        } catch (error) {
+        } catch {
             showMessage(buttonVerification, 'Could not connect to server. Please try again.');
             buttonVerification.disabled = false;
             buttonVerification.classList.add('is-active');
