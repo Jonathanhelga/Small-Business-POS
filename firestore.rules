@@ -42,5 +42,12 @@ service cloud.firestore {
     match /otps/{email} {
       allow read, write: if false;
     }
+
+    // Admin PIN hashes are managed exclusively by the backend (firebase-admin bypasses
+    // these rules), same as /otps. Deny all client access so the hash/salt can never be
+    // read into the browser and brute-forced offline in a devtools console.
+    match /adminPins/{uid} {
+      allow read, write: if false;
+    }
   }
 }

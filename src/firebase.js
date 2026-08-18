@@ -342,7 +342,3 @@ export async function reserveNextSku(uid, fallbackSeed = 0) {
     });
     return `SKU-${String(nextSeq).padStart(5, '0')}`;
 }
-
-export async function updateAdminPinHash(uid, hashHex) {
-    await setDoc(doc(db, 'users', uid), { adminPinHash: hashHex }, { merge: true });
-} 
