@@ -43,6 +43,15 @@ const adminPinLimiter = rateLimit({
     legacyHeaders: false,
 });
 
+// Generous: called once per checkout so the transaction can validate promo
+// expiry against server time instead of a possibly-wrong device clock.
+const serverTimeLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000,  // 5 minutes
+    max: 120,                  // 120 requests per IP per window
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // Only the app's own frontends may call these endpoints from a browser.
 const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
@@ -52,7 +61,7 @@ const allowedOrigins = process.env.CORS_ORIGINS
         'http://localhost:5173',
     ];
 
-app.use(cors({ origin: allowedOrigins, methods: ['POST'] }));
+app.use(cors({ origin: allowedOrigins, methods: ['POST', 'GET'] }));
 app.use(express.json());
 
 
@@ -177,6 +186,12 @@ app.post('/api/admin-pin/verify', adminPinLimiter, requireAuth, async (req, res)
         console.error("Failed to verify admin PIN:", error);
         res.status(500).json({ error: "Failed to verify PIN" });
     }
+});
+
+// Lets the client validate promo expiry against a clock it can't tamper with,
+// instead of trusting its own (possibly wrong) device time.
+app.get('/api/server-time', serverTimeLimiter, (req, res) => {
+    res.status(200).json({ now: Date.now() });
 });
 
 app.listen(port, () => console.log(`Backend Server running on port ${port}`));

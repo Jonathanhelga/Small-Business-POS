@@ -33,6 +33,13 @@ export function promoRemaining(promo) {
     return Math.max(0, Number(promo.totalLimit) - (Number(promo.usedQty) || 0));
 }
 
+// Pulled out so the checkout transaction can run the same expiry check against
+// server time (Tier 3, item 9) instead of only the device clock used for the
+// client-side "is this promo still worth showing" check below.
+export function isPromoExpired(promo, now = Date.now()) {
+    return promo?.endsAt != null && now > Number(promo.endsAt);
+}
+
 export function isPromoActive(promo, now = Date.now()) {
     if (!promo) return false;
 
@@ -42,7 +49,7 @@ export function isPromoActive(promo, now = Date.now()) {
     const perOrder = Number(promo.maxDiscountedQty);
     if (!Number.isFinite(perOrder) || perOrder < 1) return false;
 
-    if (promo.endsAt != null && now > Number(promo.endsAt)) return false;
+    if (isPromoExpired(promo, now)) return false;
 
     return promoRemaining(promo) > 0;
 }

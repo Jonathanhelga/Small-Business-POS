@@ -1,6 +1,27 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, addDoc, getDoc, updateDoc, deleteDoc, collection, query, where, orderBy, getDocs, serverTimestamp, runTransaction, increment, startAfter, limit } from "firebase/firestore";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { isPromoExpired } from "./promo";
+
+const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+
+// Best-effort server-authoritative "now" for promo-expiry checks at checkout,
+// so a wrong/rolled-back device clock can't be used to redeem an expired
+// promo. Falls back to the device clock if the backend is unreachable —
+// availability of checkout matters more than this one anti-fraud check, and
+// the stock/promo-cap checks in submitOrder's transaction stay authoritative
+// regardless.
+async function fetchServerNow() {
+    try {
+        const response = await fetch(`${SERVER_URL}/api/server-time`);
+        if (!response.ok) throw new Error(`server-time responded ${response.status}`);
+        const data = await response.json();
+        return Number(data.now) || Date.now();
+    } catch (error) {
+        console.warn("Falling back to device clock for promo-expiry check:", error);
+        return Date.now();
+    }
+}
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -121,6 +142,7 @@ export async function fetchUserProfile(uid) {
 export async function submitOrder(orderPayload, uid){
     const orderRef = doc(collection(db, "orders"));
     const inventoryRefs = orderPayload.items.map(item => doc(db, "inventory", item.id));
+    const serverNow = await fetchServerNow();
 
     await runTransaction(db, async (transaction) => {
         const inventorySnaps = [];
@@ -140,6 +162,9 @@ export async function submitOrder(orderPayload, uid){
                 throw new Error(`Not enough stock for "${label}" (only ${currentStock} left).`);
             }
             if (item.promoDiscountedQty > 0) {
+                if (isPromoExpired(data.promo, serverNow)) {
+                    throw new Error(`Promo for "${label}" has expired.`);
+                }
                 const remaining = data.promo?.totalLimit == null
                     ? Infinity
                     : Math.max(0, Number(data.promo.totalLimit) - (Number(data.promo.usedQty) || 0));

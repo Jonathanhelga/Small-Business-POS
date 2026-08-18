@@ -4,6 +4,7 @@ import {
     toDateInputValue,
     promoRemaining,
     isPromoActive,
+    isPromoExpired,
     discountedQty,
     promoSplit,
     promoLineTotal,
@@ -91,6 +92,26 @@ describe('isPromoActive', () => {
 
     it('is inactive for a null promo', () => {
         expect(isPromoActive(null)).toBe(false);
+    });
+});
+
+describe('isPromoExpired', () => {
+    it('is false when there is no endsAt', () => {
+        expect(isPromoExpired(activePromo({ endsAt: null }))).toBe(false);
+    });
+
+    it('is false when endsAt is in the future relative to `now`', () => {
+        const promo = activePromo({ endsAt: Date.now() + 60_000 });
+        expect(isPromoExpired(promo, Date.now())).toBe(false);
+    });
+
+    it('is true when `now` is past endsAt, regardless of which clock produced `now`', () => {
+        const promo = activePromo({ endsAt: 1000 });
+        expect(isPromoExpired(promo, 1001)).toBe(true);
+    });
+
+    it('is false for a missing promo', () => {
+        expect(isPromoExpired(null, Date.now())).toBe(false);
     });
 });
 
