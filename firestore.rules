@@ -5,6 +5,11 @@ service cloud.firestore {
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
+    // Per-owner counter backing the atomic auto-SKU reservation in reserveNextSku().
+    // Keyed by uid like /users/{uid} so ownership is just an ID match.
+    match /skuCounters/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
     //request.auth = the whole login info of user whose making the request if they are not logged in its a null
     //request.auth.uid = just the user's ID, pulled out of that login info.
     //request.resource.data = the new data the client is trying to write. Only exists for create and update, not for read or delete.
@@ -35,6 +40,13 @@ service cloud.firestore {
     // OTPs are managed exclusively by the backend (firebase-admin bypasses these rules).
     // Deny all client access so signup codes can't be read or tampered with from the browser.
     match /otps/{email} {
+      allow read, write: if false;
+    }
+
+    // Admin PIN hashes are managed exclusively by the backend (firebase-admin bypasses
+    // these rules), same as /otps. Deny all client access so the hash/salt can never be
+    // read into the browser and brute-forced offline in a devtools console.
+    match /adminPins/{uid} {
       allow read, write: if false;
     }
   }

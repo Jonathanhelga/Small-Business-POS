@@ -38,7 +38,7 @@ function logOutAccount(){
         try {
             await LogOutUser();
             window.location.reload();
-        } catch (error) {
+        } catch {
             showToast('Sign Out Error: please try again later:)', 'error');
         }
     });

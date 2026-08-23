@@ -1,6 +1,28 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, addDoc, getDoc, updateDoc, deleteDoc, collection, query, where, orderBy, getDocs, serverTimestamp, writeBatch, increment, startAfter, limit } from "firebase/firestore";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
+import { getFirestore, doc, setDoc, addDoc, getDoc, updateDoc, deleteDoc, collection, query, where, orderBy, getDocs, serverTimestamp, runTransaction, increment, startAfter, limit } from "firebase/firestore";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { isPromoExpired } from "./promo";
+import { isValidPaymentMethod, DEFAULT_PAYMENT_METHOD } from "./payment_methods";
+
+const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+
+// Best-effort server-authoritative "now" for promo-expiry checks at checkout,
+// so a wrong/rolled-back device clock can't be used to redeem an expired
+// promo. Falls back to the device clock if the backend is unreachable —
+// availability of checkout matters more than this one anti-fraud check, and
+// the stock/promo-cap checks in submitOrder's transaction stay authoritative
+// regardless.
+async function fetchServerNow() {
+    try {
+        const response = await fetch(`${SERVER_URL}/api/server-time`);
+        if (!response.ok) throw new Error(`server-time responded ${response.status}`);
+        const data = await response.json();
+        return Number(data.now) || Date.now();
+    } catch (error) {
+        console.warn("Falling back to device clock for promo-expiry check:", error);
+        return Date.now();
+    }
+}
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -113,32 +135,70 @@ export async function fetchUserProfile(uid) {
     return cachedUserProfile;
 }
 
+// Runs the whole checkout as one transaction: stock floors and promo lifetime
+// caps are read and validated in the same round-trip that writes the order, so
+// two cashiers checking out the last unit (or the last promo slot) at the same
+// moment can't both succeed. Firestore retries the callback itself if another
+// write lands on one of these documents mid-transaction.
 export async function submitOrder(orderPayload, uid){
-    const batch = writeBatch(db);
-
     const orderRef = doc(collection(db, "orders"));
-    batch.set(orderRef, {
-        ...orderPayload,
-        ownerId: uid,
-        createdAt: serverTimestamp(),
+    const inventoryRefs = orderPayload.items.map(item => doc(db, "inventory", item.id));
+    const serverNow = await fetchServerNow();
+
+    await runTransaction(db, async (transaction) => {
+        const inventorySnaps = [];
+        for (const ref of inventoryRefs) {
+            inventorySnaps.push(await transaction.get(ref));
+        }
+
+        orderPayload.items.forEach((item, i) => {
+            const snap = inventorySnaps[i];
+            const label = item.name || item.id;
+            if (!snap.exists()) {
+                throw new Error(`"${label}" no longer exists in inventory.`);
+            }
+            const data = snap.data();
+            const currentStock = Number(data.stockLevel) || 0;
+            if (currentStock < item.quantity) {
+                throw new Error(`Not enough stock for "${label}" (only ${currentStock} left).`);
+            }
+            if (item.promoDiscountedQty > 0) {
+                if (isPromoExpired(data.promo, serverNow)) {
+                    throw new Error(`Promo for "${label}" has expired.`);
+                }
+                const remaining = data.promo?.totalLimit == null
+                    ? Infinity
+                    : Math.max(0, Number(data.promo.totalLimit) - (Number(data.promo.usedQty) || 0));
+                if (item.promoDiscountedQty > remaining) {
+                    throw new Error(`Promo limit for "${label}" has already been reached.`);
+                }
+            }
+        });
+
+        transaction.set(orderRef, {
+            ...orderPayload,
+            ownerId: uid,
+            paymentMethod: isValidPaymentMethod(orderPayload.paymentMethod)
+                ? orderPayload.paymentMethod
+                : DEFAULT_PAYMENT_METHOD,
+            createdAt: serverTimestamp(),
+        });
+
+        orderPayload.items.forEach((item, i) => {
+            const updates = {
+                stockLevel: increment(-item.quantity),
+                lastUpdated: serverTimestamp(),
+            };
+            // Only the units that actually got the promo price count against its
+            // lifetime limit, so a partly-discounted line increments by less than
+            // its quantity.
+            if (item.promoDiscountedQty > 0) {
+                updates['promo.usedQty'] = increment(item.promoDiscountedQty);
+            }
+            transaction.update(inventoryRefs[i], updates);
+        });
     });
 
-    for (const item of orderPayload.items) {
-        const inventoryRef = doc(db, "inventory", item.id);
-        const updates = {
-            stockLevel: increment(-item.quantity),
-            lastUpdated: serverTimestamp(),
-        };
-        // Only the units that actually got the promo price count against its
-        // lifetime limit, so a partly-discounted line increments by less than
-        // its quantity.
-        if (item.promoDiscountedQty > 0) {
-            updates['promo.usedQty'] = increment(item.promoDiscountedQty);
-        }
-        batch.update(inventoryRef, updates);
-    }
-
-    await batch.commit();
     return orderRef.id;
 }
 
@@ -258,28 +318,56 @@ export async function deleteInventoryItem(itemId) {
     await deleteDoc(doc(db, 'inventory', itemId));
 }
 
+// Deleting an order must undo everything submitOrder did to inventory: restock
+// the quantity AND give back any promo allowance the order consumed. Without
+// the rollback, a deleted promo order permanently burns its lifetime limit.
 export async function deleteOrder(orderId) {
     const orderRef = doc(db, 'orders', orderId);
-    const orderSnap = await getDoc(orderRef);
-    const items = orderSnap.exists() ? orderSnap.data().items ?? [] : [];
 
-    const batch = writeBatch(db);
-    batch.delete(orderRef);
+    await runTransaction(db, async (transaction) => {
+        const orderSnap = await transaction.get(orderRef);
+        if (!orderSnap.exists()) return;
+        const items = orderSnap.data().items ?? [];
 
-    for (const item of items) {
-        const inventoryRef = doc(db, "inventory", item.id);
-        const inventorySnap = await getDoc(inventoryRef);
-        if (!inventorySnap.exists()) continue;
+        const inventoryRefs = items.map(item => doc(db, "inventory", item.id));
+        const inventorySnaps = [];
+        for (const ref of inventoryRefs) {
+            inventorySnaps.push(await transaction.get(ref));
+        }
 
-        batch.update(inventoryRef, {
-            stockLevel: increment(item.quantity),
-            lastUpdated: serverTimestamp(),
+        transaction.delete(orderRef);
+
+        items.forEach((item, i) => {
+            if (!inventorySnaps[i].exists()) return;
+
+            const updates = {
+                stockLevel: increment(item.quantity),
+                lastUpdated: serverTimestamp(),
+            };
+            if (item.promoDiscountedQty > 0) {
+                updates['promo.usedQty'] = increment(-item.promoDiscountedQty);
+            }
+            transaction.update(inventoryRefs[i], updates);
         });
-    }
-
-    await batch.commit();
+    });
 }
 
-export async function updateAdminPinHash(uid, hashHex) {
-    await setDoc(doc(db, 'users', uid), { adminPinHash: hashHex }, { merge: true });
-} 
+// Atomically reserves the next auto-generated SKU for this owner. The client-side
+// preview (generateNextSku in add_item_ui.js) reads the in-memory item cache, which
+// can be stale across tabs/devices — two sessions previewing at once would offer the
+// same "next" number. This transaction is the source of truth used at actual save
+// time: it increments a per-owner counter doc, so concurrent saves always land on
+// different sequence numbers. `fallbackSeed` seeds the counter the first time it's
+// used, from the highest existing SKU number the caller already has in memory, so
+// numbering continues where the shop's existing items left off.
+export async function reserveNextSku(uid, fallbackSeed = 0) {
+    const counterRef = doc(db, 'skuCounters', uid);
+    const nextSeq = await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(counterRef);
+        const current = snap.exists() ? (Number(snap.data().value) || 0) : fallbackSeed;
+        const next = current + 1;
+        transaction.set(counterRef, { value: next, ownerId: uid }, { merge: true });
+        return next;
+    });
+    return `SKU-${String(nextSeq).padStart(5, '0')}`;
+}

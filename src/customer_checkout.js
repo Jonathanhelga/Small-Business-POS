@@ -4,11 +4,13 @@ import { getOrderedItems, getOrderSubtotal, getTaxRate } from './order-add_item'
 import { promoSplit } from './promo';
 import { auth, fetchCustomers, getCachedUserProfile, fetchUserProfile, getCurrentCurrency as currentCurrency } from './firebase';
 import { initCustomFields, resetCustomFields, collectCustomFields, collectFieldDefinitions, renderSavedFields } from './checkout_custom_fields';
+import { PAYMENT_METHODS, DEFAULT_PAYMENT_METHOD } from './payment_methods';
 
 const MODAL_ID = 'customer-checkout-modal';
 const CUSTOMER_FIELDS = ['js-checkout-customer-name', 'js-checkout-customer-phone'];
 
 let customerCache = [];
+let selectedPaymentMethod = DEFAULT_PAYMENT_METHOD;
 
 export function initCustomerCheckout() {
     const discountInput = document.getElementById('js-checkout-discount');
@@ -17,18 +19,39 @@ export function initCustomerCheckout() {
     discountInput.addEventListener('input', recalcTotals);
     select.addEventListener('change', handleCustomerSelect);
 
+    const paymentGroup = document.getElementById('js-checkout-payment-methods');
+    paymentGroup?.addEventListener('click', (e) => {
+        const btn = e.target.closest('.c-checkout__payment-btn');
+        if (btn) setPaymentMethod(btn.dataset.paymentMethod);
+    });
+
     initCustomFields();
 }
 
 export async function openCustomerCheckout() {
     renderOrderRecap();
     resetDiscount();
+    resetPaymentMethod();
     recalcTotals();
     resetCustomFields();
     await populateSavedFields();
     await populateCustomerDropdown();
     resetCustomerSelection();
     toggleModal(MODAL_ID);
+}
+
+function setPaymentMethod(method) {
+    if (!PAYMENT_METHODS.includes(method)) return;
+    selectedPaymentMethod = method;
+    document.querySelectorAll('#js-checkout-payment-methods .c-checkout__payment-btn').forEach(btn => {
+        const isSelected = btn.dataset.paymentMethod === method;
+        btn.classList.toggle('is-selected', isSelected);
+        btn.setAttribute('aria-checked', String(isSelected));
+    });
+}
+
+function resetPaymentMethod() {
+    setPaymentMethod(DEFAULT_PAYMENT_METHOD);
 }
 
 export function closeCustomerCheckout() {
@@ -59,6 +82,7 @@ export function getCheckoutFormData() {
         fieldDefinitions: collectFieldDefinitions(),
         discountPct,
         discountAmount,
+        paymentMethod: selectedPaymentMethod,
     };
 }
 

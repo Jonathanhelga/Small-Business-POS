@@ -126,6 +126,35 @@
     font-style: italic;
 }
 
+/* Payment method: segmented row of pill buttons */
+.c-checkout__payment-methods {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+.c-checkout__payment-btn {
+    flex: 1;
+    min-width: 6rem;
+    padding: 8px 16px;
+    border: 2px solid var(--clr-border);
+    border-radius: 100px;
+    background-color: var(--clr-bg-surface);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--clr-text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.c-checkout__payment-btn:hover {
+    border-color: var(--clr-focus-ring);
+    background-color: var(--clr-panel);
+}
+.c-checkout__payment-btn.is-selected {
+    border-color: var(--clr-focus-ring);
+    background-color: var(--clr-focus-ring);
+    color: #fff;
+}
+
 /* Discount + totals */
 .c-checkout__totals {
     display: flex;

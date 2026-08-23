@@ -1,21 +1,46 @@
-import { updateAdminPinHash, getCachedUserProfile, setCachedUserProfile } from './firebase';
 import { toggleModal } from './modal-handler';
 import { showToast } from "./toast";
+
+const SERVER_URL = import.meta.env.VITE_SERVER_URL;
+
 let currentUser = null;
 let isChangingPin = false;
 let resolvePinConfirm = null;
+// Whether the account has a PIN configured, per the server's /adminPins record.
+// Cached locally after initAdminPin() so UI can decide synchronously (setup vs
+// gate) without an async round-trip on every click.
+let hasPinConfigured = false;
 
 const PIN_INPUT_IDS = ['ap-old-input', 'ap-new-input', 'ap-confirm-input', 'ap-gate-input'];
 const rawPinValues = new Map();
 const maskTimers = new Map();
 const REVEAL_MS = 250;
 
-async function hashPin(pin) {
-    const buffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pin));
-    return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+function isValidPin(pin) { return /^\d{4}$/.test(pin); }
+
+// Verification/storage of the PIN happens entirely server-side (see
+// server/adminPinService.js) so the client never holds a hash it could
+// brute-force offline — it only ever gets a yes/no answer back.
+async function callPinApi(path, pin) {
+    const idToken = await currentUser.getIdToken();
+    const response = await fetch(`${SERVER_URL}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ pin }),
+    });
+    return { ok: response.ok };
 }
 
-function isValidPin(pin) { return /^\d{4}$/.test(pin); }
+async function refreshPinStatus() {
+    const idToken = await currentUser.getIdToken();
+    const response = await fetch(`${SERVER_URL}/api/admin-pin/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+    });
+    const data = await response.json().catch(() => ({}));
+    hasPinConfigured = Boolean(data.hasPin);
+    updateFeaturesButtonLabel();
+}
 
 function getRawPin(inputId) { return rawPinValues.get(inputId) || ''; }
 
@@ -31,10 +56,10 @@ function handlePinInputTyped(inputId) {
     const displayedLength = input.value.length;
 
     let nextRaw;
-    if (displayedLength > prevRaw.length) { 
+    if (displayedLength > prevRaw.length) {
         const addedDigits = input.value.slice(-(displayedLength - prevRaw.length)).replace(/\D/g, '');
         nextRaw = (prevRaw + addedDigits).slice(0, 4);
-    } 
+    }
     else { nextRaw = prevRaw.slice(0, displayedLength); }
 
     rawPinValues.set(inputId, nextRaw);
@@ -59,12 +84,11 @@ function showApPanel(panelId) {
 }
 
 function updateFeaturesButtonLabel() {
-    const hasPin = Boolean(getCachedUserProfile()?.adminPinHash);
-    document.getElementById('admin-pin-open').textContent = hasPin ? 'Change Admin PIN' : 'Set up Admin PIN';
+    document.getElementById('admin-pin-open').textContent = hasPinConfigured ? 'Change Admin PIN' : 'Set up Admin PIN';
 }
 
 function openSetupFlow() {
-    isChangingPin = Boolean(getCachedUserProfile()?.adminPinHash);
+    isChangingPin = hasPinConfigured;
     resetPinInput('ap-old-input');
     resetPinInput('ap-new-input');
     resetPinInput('ap-confirm-input');
@@ -81,12 +105,17 @@ async function handleVerifyOldPin() {
         setApFeedback('ap-old-feedback', 'Enter a 4-digit PIN.');
         return;
     }
-    const hash = await hashPin(input);
-    if (hash !== getCachedUserProfile()?.adminPinHash) {
-        setApFeedback('ap-old-feedback', 'Incorrect Admin PIN.');
-        return;
+    try {
+        const { ok } = await callPinApi('/api/admin-pin/verify', input);
+        if (!ok) {
+            setApFeedback('ap-old-feedback', 'Incorrect Admin PIN.');
+            return;
+        }
+        showApPanel('ap-new-pin');
+    } catch (err) {
+        console.error('Failed to verify Admin PIN:', err);
+        setApFeedback('ap-old-feedback', 'Could not verify PIN. Check your connection.');
     }
-    showApPanel('ap-new-pin');
 }
 
 async function handleSaveNewPin() {
@@ -107,9 +136,12 @@ async function handleSaveNewPin() {
     btn.textContent = 'Saving...';
 
     try {
-        const hashHex = await hashPin(newPin);
-        await updateAdminPinHash(currentUser.uid, hashHex);
-        setCachedUserProfile({ ...getCachedUserProfile(), adminPinHash: hashHex });
+        const { ok } = await callPinApi('/api/admin-pin/set', newPin);
+        if (!ok) {
+            setApFeedback('ap-feedback', 'Failed to save PIN. Please try again.');
+            return;
+        }
+        hasPinConfigured = true;
         updateFeaturesButtonLabel();
         toggleModal('admin-pin-modal');
         showToast('PIN successfully created :)');
@@ -134,14 +166,19 @@ async function handlePinGateSubmit() {
         setApFeedback('ap-gate-feedback', 'Enter a 4-digit PIN.');
         return;
     }
-    const hash = await hashPin(input);
-    if (hash !== getCachedUserProfile()?.adminPinHash) {
-        setApFeedback('ap-gate-feedback', 'Incorrect Admin PIN.');
-        return;
+    try {
+        const { ok } = await callPinApi('/api/admin-pin/verify', input);
+        if (!ok) {
+            setApFeedback('ap-gate-feedback', 'Incorrect Admin PIN.');
+            return;
+        }
+        toggleModal('admin-pin-gate-modal');
+        if (resolvePinConfirm) resolvePinConfirm(true);
+        resolvePinConfirm = null;
+    } catch (err) {
+        console.error('Failed to verify Admin PIN:', err);
+        setApFeedback('ap-gate-feedback', 'Could not verify PIN. Check your connection.');
     }
-    toggleModal('admin-pin-gate-modal');
-    if (resolvePinConfirm) resolvePinConfirm(true);
-    resolvePinConfirm = null;
 }
 
 function handlePinGateCancel() {
@@ -154,7 +191,7 @@ function handlePinGateCancel() {
 // Returns true only when the user has entered the correct Admin PIN.
 // If no PIN is set up yet, routes the user into setup instead and returns false.
 export function requireAdminPin() {
-    if (!getCachedUserProfile()?.adminPinHash) {
+    if (!hasPinConfigured) {
         openSetupFlow();
         return Promise.resolve(false);
     }
@@ -183,7 +220,7 @@ export function requireAdminPin() {
 
 export function initAdminPin(user) {
     currentUser = user;
-    updateFeaturesButtonLabel();
+    refreshPinStatus().catch(err => console.error('Failed to load Admin PIN status:', err));
 
     PIN_INPUT_IDS.forEach(id => {
         document.getElementById(id).addEventListener('input', () => handlePinInputTyped(id));

@@ -24,10 +24,11 @@ let visibleOrders = [];
 
 // Fixed attributes always available, regardless of the custom-field library.
 const FIXED_ATTRIBUTES = [
-    { key: 'date',     label: 'Order Date', type: 'date', kind: 'fixed' },
-    { key: 'customer', label: 'Customer',   type: 'text', kind: 'fixed' },
-    { key: 'phone',    label: 'Phone',      type: 'text', kind: 'fixed' },
-    { key: 'note',     label: 'Order Note', type: 'text', kind: 'fixed' },
+    { key: 'date',      label: 'Order Date',        type: 'date', kind: 'fixed' },
+    { key: 'dateUntil', label: 'Order Date (until)', type: 'date', kind: 'fixed' },
+    { key: 'customer',  label: 'Customer',          type: 'text', kind: 'fixed' },
+    { key: 'phone',     label: 'Phone',             type: 'text', kind: 'fixed' },
+    { key: 'note',      label: 'Order Note',        type: 'text', kind: 'fixed' },
 ];
 
 function formatDate(ts) {
@@ -444,6 +445,7 @@ function removeFilter(key) {
 }
 
 function displayFilterValue(attr, value) {
+    if (attr.key === 'dateUntil') return `${prettifyDate(value)} or earlier`;
     if (attr.type === 'date') return `${prettifyDate(value)} or later`;
     if (attr.type === 'time') return `${prettifyTime(value)} or later`;
     return value;
@@ -492,6 +494,7 @@ function orderMatchesFilter(order, filter) {
     const attr = filter.attr;
     if (attr.kind === 'fixed') {
         if (attr.key === 'date') return orderDateKey(order.createdAt) >= filter.value;
+        if (attr.key === 'dateUntil') return orderDateKey(order.createdAt) <= filter.value;
         return fixedText(order, attr.key).toLowerCase().includes(filter.value.toLowerCase());
     }
     const field = order.customFields ? order.customFields[attr.id] : null;

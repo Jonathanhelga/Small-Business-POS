@@ -361,15 +361,6 @@ function toJsDate(ts) {
     return ts.toDate ? ts.toDate() : new Date(ts);
 }
 
-function formatCellDate(ts) {
-    const d = toJsDate(ts);
-    if (!d || isNaN(d)) return '';
-    return d.toLocaleString('en-US', {
-        year: 'numeric', month: 'short', day: 'numeric',
-        hour: '2-digit', minute: '2-digit',
-    });
-}
-
 function fileDateStamp() {
     const d = new Date();
     const pad = (n) => String(n).padStart(2, '0');

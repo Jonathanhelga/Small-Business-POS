@@ -43,6 +43,14 @@ export function getCurrencyFractionDigits(currencyCode = 'IDR') {
     return (CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR).fractionDigits;
 }
 
+// Rounds a raw money value to the currency's smallest real unit (IDR whole
+// rupiah, USD cents, ...) so promo/tax math never leaves sub-unit drift in a
+// value that gets stored or summed further.
+export function roundToCurrency(amount, currencyCode = 'IDR') {
+    const factor = 10 ** getCurrencyFractionDigits(currencyCode);
+    return Math.round((amount + Number.EPSILON) * factor) / factor;
+}
+
 export function getCurrencySeparators(currencyCode = 'IDR') {
     const cfg = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR;
     const parts = new Intl.NumberFormat(cfg.locale).formatToParts(11111.1);

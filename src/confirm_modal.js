@@ -1,7 +1,7 @@
 import { toggleModal } from './modal-handler';
 
 export function showConfirm({ title, message, confirmText = 'Confirm', cancelText = 'Cancel', danger = false } = {}) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         const confirm_modal = document.getElementById('confirm-modal');
         if (!confirm_modal) { resolve(false); return; }
         const panel = document.getElementById('c-modal-confirm');
