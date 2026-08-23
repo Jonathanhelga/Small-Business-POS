@@ -3,7 +3,6 @@ import { showToast } from "./toast";
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 let emailFinal = '';
 let passFinal = '';
-let usernameFinal = '';
 let otpAttempts = 0;
 const MAX_OTP_ATTEMPTS = 3;
 
@@ -49,7 +48,6 @@ function resetSignUpForm() {
     otpAttempts = 0;
     emailFinal = '';
     passFinal = '';
-    usernameFinal = '';
     document.getElementById('js-username').value = '';
     document.getElementById('js-email').value = '';
     document.getElementById('js-password').value = '';
@@ -93,7 +91,6 @@ function ifButtonIsClicked(){
     buttonVerification.addEventListener('click', async function(){
         emailFinal = document.getElementById('js-email').value.trim();
         passFinal = document.getElementById('js-password').value.trim();
-        usernameFinal = document.getElementById('js-username').value.trim();
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(emailFinal)) {
@@ -160,6 +157,13 @@ function ifButtonIsClicked(){
             const verifyData = isJson ? await verifyResponse.json() : {};
 
             if (!verifyResponse.ok) {
+                if (verifyData.error && verifyData.error !== 'Incorrect code') {
+                    showMessage(buttonSignUp, verifyData.error);
+                    buttonSignUp.textContent = buttonSignUpText;
+                    buttonSignUp.disabled = false;
+                    return;
+                }
+
                 otpAttempts++;
                 const remaining = MAX_OTP_ATTEMPTS - otpAttempts;
                 showMessage(
