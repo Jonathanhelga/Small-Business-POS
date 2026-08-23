@@ -379,7 +379,7 @@ async function handleCheckoutFormSubmit(e) {
     if (!user) { showToast('Session expired. Please log in again.', 'error'); return; }
     if (orderedItems.length === 0) { showToast('No items in the order yet.', 'error'); return; }
 
-    const { selectedCustomerId, customer, orderNote, customFields, fieldDefinitions, discountPct, discountAmount } = getCheckoutFormData();
+    const { selectedCustomerId, customer, orderNote, customFields, fieldDefinitions, discountPct, discountAmount, paymentMethod } = getCheckoutFormData();
 
     let customerId = selectedCustomerId;
     let customerSnapshot = customer;
@@ -428,7 +428,8 @@ async function handleCheckoutFormSubmit(e) {
         customerId: customerId || null,
         customer: customerSnapshot,
         orderNote,
-        customFields
+        customFields,
+        paymentMethod,
     };
 
     setCheckoutSubmitting(true, "Submitting...");

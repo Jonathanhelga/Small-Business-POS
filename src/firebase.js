@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, addDoc, getDoc, updateDoc, deleteDoc, collection, query, where, orderBy, getDocs, serverTimestamp, runTransaction, increment, startAfter, limit } from "firebase/firestore";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { isPromoExpired } from "./promo";
+import { isValidPaymentMethod, DEFAULT_PAYMENT_METHOD } from "./payment_methods";
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL;
 
@@ -177,6 +178,9 @@ export async function submitOrder(orderPayload, uid){
         transaction.set(orderRef, {
             ...orderPayload,
             ownerId: uid,
+            paymentMethod: isValidPaymentMethod(orderPayload.paymentMethod)
+                ? orderPayload.paymentMethod
+                : DEFAULT_PAYMENT_METHOD,
             createdAt: serverTimestamp(),
         });
 
