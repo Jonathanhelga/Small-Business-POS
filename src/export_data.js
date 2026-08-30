@@ -8,18 +8,21 @@ const COL_PADDING = 2;
 const COL_MIN_WCH = 10;
 const COL_MAX_WCH = 40;
 
-// Row/column map of the summary sheet. The title banner at row 0 pushes every other block down by one, so these are the single source of truth: the style. Functions below derive their cell addresses from them rather than hardcoding.
+// Row/column map of the summary sheet. The title banner at row 0 pushes every other
+// block down by one, so these are the single source of truth: the style functions
+// below derive their cell addresses from them rather than hardcoding.
 const SUMMARY_TITLE_ROW      = 0;
 const SUMMARY_META_FIRST_ROW = 1;
 const SUMMARY_META_LAST_ROW  = 4; 
 const SUMMARY_SPACER_ROW     = 5;
 const SUMMARY_HEADER_ROW     = 6;
 const SUMMARY_FIRST_DATA_ROW = 7;
-const SUMMARY_LAST_COL       = 4; // column E
-const SUMMARY_MONEY_COLS     = [2, 3]; // Total Revenue, Total Profit
-const SUMMARY_MARGIN_COL     = 4; // Margin Percentage
+const SUMMARY_LAST_COL       = 6; // column G
+const SUMMARY_MONEY_COLS     = [2, 3, 4, 5]; // Gross Collected, Tax Collected, Net Revenue, Total Profit
+const SUMMARY_MARGIN_COL     = 6; // Margin Percentage
 
-// Excel's percent format multiplies the cell by 100 when it renders, so the cell must hold the raw fraction (0.325) rather than 32.5, or it would read 3250%.
+// Excel's percent format multiplies the cell by 100 when it renders, so the cell must
+// hold the raw fraction (0.325) rather than 32.5, or it would read 3250%.
 const PCT_FORMAT = '0.0%';
 
 const LEFT_ALIGN = { alignment: { horizontal: 'left' } };
@@ -27,7 +30,8 @@ const LEFT_ALIGN = { alignment: { horizontal: 'left' } };
 let currentUser = null;
 let isExporting = false;
 
-// xlsx-js-style is a ~2.7 MB library. Loaded on demand the first time an export runs (see runExport) rather than statically, so it stays out of the main
+// xlsx-js-style is a ~2.7 MB library. Loaded on demand the first time an export runs
+// (see runExport) rather than statically, so it stays out of the main bundle.
 let XLSX = null;
 
 export function initExport(user) {
@@ -39,7 +43,7 @@ export function initExport(user) {
         openBtn.addEventListener('click', () => {
             toggleModal('features-modal');
             toggleModal('export-data-modal');
-            // Start each visit with a clean slate — no stale card from last time.
+            // Start each visit with a clean slate, no stale card from last time.
             resetFileCard();
         });
     }
@@ -106,32 +110,45 @@ function buildSummarySheet(profile, orders, fromDate, toDate, currency){
 
 function summaryRows(profile, orders, fromDate, toDate, currency){
     const businessName = profile?.business_name || 'POS';
-
-    let totalOrders = orders.length;
-    let revenue = 0;
-    let profit = 0;
+    const totalOrders = orders.length;
+    let grossCollected = 0;
+    let taxCollected = 0;
+    let netRevenue = 0;
+    let costOfGoods = 0;
     let itemsSold = 0;
+
     orders.forEach((order) => {
-        revenue += order.totalPrice ?? 0;
+        const tax = order.taxAmount ?? 0;
+        // Net revenue is what the shop actually keeps: gross minus the tax it only
+        // collects on the government's behalf. totalPrice is defined as
+        // subtotalAfterDiscount + taxAmount, so this fallback is that identity
+        // rearranged, not a guess. It also reads correctly for orders written before
+        // the tax feature existed, where tax is 0 and totalPrice never included any.
+        const net = order.subtotalAfterDiscount ?? ((order.totalPrice ?? 0) - tax);
+        grossCollected += order.totalPrice ?? 0;
+        taxCollected += tax;
+        netRevenue += net;
+
         const lis = Array.isArray(order.items) ? order.items : [];
         lis.forEach((li) => {
             itemsSold += li.quantity ?? 0;
-            profit += (li.subtotal ?? 0) - (li.cost ?? 0) * (li.quantity ?? 0);
+            costOfGoods += Number(li.cost ?? 0) * Number(li.quantity ?? 0);
         });
     });
-    // Stored as a fraction for PCT_FORMAT. An empty range leaves revenue at 0;
+    const profit = netRevenue - costOfGoods;
+    // Stored as a fraction for PCT_FORMAT. An empty range leaves netRevenue at 0;
     // guard so the cell holds 0 rather than NaN.
-    const marginPercentage = revenue > 0 ? profit / revenue : 0;
+    const marginPercentage = netRevenue > 0 ? profit / netRevenue : 0;
 
     return [
         [`${businessName} Sales Report`],
         ['Report Type:', 'Summary'],
         ['Business Name:', businessName],
         ['Currency:', currency],
-        ['Period', formatPeriod(fromDate, toDate)],
+        ['Period:', formatPeriod(fromDate, toDate)],
         [],
-        ['Total Orders', 'Total Item Sold', 'Total Revenue', 'Total Profit', 'Margin Percentage'],
-        [totalOrders, itemsSold, revenue, profit, marginPercentage]
+        ['Total Orders', 'Total Item Sold', 'Gross Collected', 'Tax Collected', 'Net Revenue', 'Total Profit', 'Margin Percentage'],
+        [totalOrders, itemsSold, grossCollected, taxCollected, netRevenue, profit, marginPercentage]
     ];
 }
 
