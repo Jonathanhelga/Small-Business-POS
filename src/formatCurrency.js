@@ -36,16 +36,10 @@ export function getCurrencySymbol(currencyCode = 'IDR') {
     return (CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR).symbol;
 }
 
-// How many decimal places this currency uses (IDR 0, USD 2). Money maths that
-// must land on a real payable amount rounds to this, rather than leaving
-// fractions of a rupiah floating around in a subtotal.
 export function getCurrencyFractionDigits(currencyCode = 'IDR') {
     return (CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.IDR).fractionDigits;
 }
 
-// Rounds a raw money value to the currency's smallest real unit (IDR whole
-// rupiah, USD cents, ...) so promo/tax math never leaves sub-unit drift in a
-// value that gets stored or summed further.
 export function roundToCurrency(amount, currencyCode = 'IDR') {
     const factor = 10 ** getCurrencyFractionDigits(currencyCode);
     return Math.round((amount + Number.EPSILON) * factor) / factor;
