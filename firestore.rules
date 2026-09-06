@@ -13,9 +13,14 @@ service cloud.firestore {
     //request.auth = the whole login info of user whose making the request if they are not logged in its a null
     //request.auth.uid = just the user's ID, pulled out of that login info.
     //request.resource.data = the new data the client is trying to write. Only exists for create and update, not for read or delete.
+    // Deletes are denied outright: they run through the backend
+    // (/api/inventory/delete), which verifies the Admin PIN and the ownerId
+    // before deleting with firebase-admin. Rules cannot see the PIN, so a
+    // client-side delete could never be gated on it.
     match /inventory/{docId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
+      allow read, update: if request.auth != null && request.auth.uid == resource.data.ownerId;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
+      allow delete: if false;
 
       match /stockUpdates/{updateId} {
         allow read, create: if request.auth != null &&
@@ -28,9 +33,12 @@ service cloud.firestore {
       }
     }
     
+    // Same as /inventory: deletes go through /api/orders/delete, which also
+    // restocks and rolls back promo usage inside one transaction.
     match /orders/{docId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
+      allow read, update: if request.auth != null && request.auth.uid == resource.data.ownerId;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
+      allow delete: if false;
     }
     match /customers/{docId} {
       allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.ownerId;

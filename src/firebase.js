@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, addDoc, getDoc, updateDoc, deleteDoc, collection, query, where, orderBy, getDocs, serverTimestamp, runTransaction, increment, startAfter, limit } from "firebase/firestore";
+import { getFirestore, doc, setDoc, addDoc, getDoc, updateDoc, collection, query, where, orderBy, getDocs, serverTimestamp, runTransaction, increment, startAfter, limit } from "firebase/firestore";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { isPromoExpired } from "./promo";
 import { isValidPaymentMethod, DEFAULT_PAYMENT_METHOD } from "./payment_methods";
@@ -314,42 +314,28 @@ export async function updateItemData(itemId, fields) {
     });
 }
 
-export async function deleteInventoryItem(itemId) {
-    await deleteDoc(doc(db, 'inventory', itemId));
+// Deletes run server-side (see server/server.js) because firestore.rules cannot
+// see that the Admin PIN was verified. The PIN travels with the request, and the
+// order restock/promo rollback now lives in that endpoint's transaction.
+async function postAdminDelete(path, body) {
+    const idToken = await auth.currentUser.getIdToken();
+    const response = await fetch(`${SERVER_URL}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || `Delete failed with status ${response.status}`);
+    }
 }
 
-// Deleting an order must undo everything submitOrder did to inventory: restock
-// the quantity AND give back any promo allowance the order consumed. Without
-// the rollback, a deleted promo order permanently burns its lifetime limit.
-export async function deleteOrder(orderId) {
-    const orderRef = doc(db, 'orders', orderId);
+export async function deleteInventoryItem(itemId, pin) {
+    await postAdminDelete('/api/inventory/delete', { itemId, pin });
+}
 
-    await runTransaction(db, async (transaction) => {
-        const orderSnap = await transaction.get(orderRef);
-        if (!orderSnap.exists()) return;
-        const items = orderSnap.data().items ?? [];
-
-        const inventoryRefs = items.map(item => doc(db, "inventory", item.id));
-        const inventorySnaps = [];
-        for (const ref of inventoryRefs) {
-            inventorySnaps.push(await transaction.get(ref));
-        }
-
-        transaction.delete(orderRef);
-
-        items.forEach((item, i) => {
-            if (!inventorySnaps[i].exists()) return;
-
-            const updates = {
-                stockLevel: increment(item.quantity),
-                lastUpdated: serverTimestamp(),
-            };
-            if (item.promoDiscountedQty > 0) {
-                updates['promo.usedQty'] = increment(-item.promoDiscountedQty);
-            }
-            transaction.update(inventoryRefs[i], updates);
-        });
-    });
+export async function deleteOrder(orderId, pin) {
+    await postAdminDelete('/api/orders/delete', { orderId, pin });
 }
 
 // Atomically reserves the next auto-generated SKU for this owner. The client-side

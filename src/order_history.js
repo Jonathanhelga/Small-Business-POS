@@ -634,15 +634,15 @@ async function handleDeleteOrder() {
     });
     if (!confirmed) return;
 
-    const pinOk = await requireAdminPin();
-    if (!pinOk) return;
+    const pin = await requireAdminPin();
+    if (!pin) return;
 
     const btn = document.getElementById('oh-delete-btn');
     btn.disabled = true;
     btn.textContent = 'Deleting...';
 
     try {
-        await deleteOrder(order.id);
+        await deleteOrder(order.id, pin);
         allOrders = allOrders.filter(o => o.id !== order.id);
         currentOrder = null;
 

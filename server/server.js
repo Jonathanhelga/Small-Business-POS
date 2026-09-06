@@ -43,6 +43,14 @@ const adminPinLimiter = rateLimit({
     legacyHeaders: false,
 });
 
+const adminDeleteLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,                       // only wrong-PIN attempts count toward this
+    skipSuccessfulRequests: true,
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // Generous: called once per checkout so the transaction can validate promo
 // expiry against server time instead of a possibly-wrong device clock.
 const serverTimeLimiter = rateLimit({
@@ -192,6 +200,71 @@ app.post('/api/admin-pin/verify', adminPinLimiter, requireAuth, async (req, res)
 // instead of trusting its own (possibly wrong) device time.
 app.get('/api/server-time', serverTimeLimiter, (req, res) => {
     res.status(200).json({ now: Date.now() });
+});
+
+app.post('/api/inventory/delete', adminDeleteLimiter, requireAuth, async (req, res) => {
+    const { itemId, pin} = req.body;
+    if(!itemId || typeof itemId !== 'string'){ return res.status(400).json({ error: "An item id is required" }); }
+    if (!pin || !PIN_RE.test(String(pin))) { return res.status(400).json({ error: "PIN must be exactly 4 digits" }); }
+    try {
+        if(!await verifyAdminPin(req.uid, String(pin))){ return res.status(401).json({ error: "Incorrect Admin PIN" }); }
+        const ref = db.collection('inventory').doc(itemId);
+        const snap = await ref.get();
+        if(!snap.exists || snap.data().ownerId !== req.uid){ return res.status(404).json({ error: "Item not found" }); }
+        
+        await db.recursiveDelete(ref);
+        res.status(200).json({ message: "Item deleted" });
+    } catch (error) {
+        console.error("Failed to delete inventory item:", error);
+        res.status(500).json({ error: "Failed to delete item" });
+    }
+});
+
+app.post('/api/orders/delete', adminDeleteLimiter, requireAuth, async (req, res) => {
+    const { orderId, pin } = req.body;
+    if (!orderId || typeof orderId !== 'string') {
+        return res.status(400).json({ error: "An order id is required" });
+    }
+    if (!pin || !PIN_RE.test(String(pin))) {
+        return res.status(400).json({ error: "PIN must be exactly 4 digits" });
+    }
+    try {
+        if (!await verifyAdminPin(req.uid, String(pin))) {
+            return res.status(401).json({ error: "Incorrect Admin PIN" });
+        }
+
+        const orderRef = db.collection('orders').doc(orderId);
+
+        const deleted = await db.runTransaction(async (transaction) => {
+            const orderSnap = await transaction.get(orderRef);
+            if (!orderSnap.exists || orderSnap.data().ownerId !== req.uid) return false;
+
+            const items = orderSnap.data().items ?? [];
+            const inventoryRefs = items.map(item => db.collection('inventory').doc(item.id));
+            const inventorySnaps = inventoryRefs.length ? await transaction.getAll(...inventoryRefs) : [];
+
+            transaction.delete(orderRef);
+
+            items.forEach((item, i) => {
+                if (!inventorySnaps[i].exists) return;
+                const updates = {
+                    stockLevel: admin.firestore.FieldValue.increment(item.quantity),
+                    lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+                };
+                if (item.promoDiscountedQty > 0) {
+                    updates['promo.usedQty'] = admin.firestore.FieldValue.increment(-item.promoDiscountedQty);
+                }
+                transaction.update(inventoryRefs[i], updates);
+            });
+            return true;
+        });
+
+        if (!deleted) return res.status(404).json({ error: "Order not found" });
+        res.status(200).json({ message: "Order deleted" });
+    } catch (error) {
+        console.error("Failed to delete order:", error);
+        res.status(500).json({ error: "Failed to delete order" });
+    }
 });
 
 app.listen(port, () => console.log(`Backend Server running on port ${port}`));

@@ -173,7 +173,7 @@ async function handlePinGateSubmit() {
             return;
         }
         toggleModal('admin-pin-gate-modal');
-        if (resolvePinConfirm) resolvePinConfirm(true);
+        if (resolvePinConfirm) resolvePinConfirm(input);
         resolvePinConfirm = null;
     } catch (err) {
         console.error('Failed to verify Admin PIN:', err);
@@ -183,17 +183,18 @@ async function handlePinGateSubmit() {
 
 function handlePinGateCancel() {
     toggleModal('admin-pin-gate-modal');
-    if (resolvePinConfirm) resolvePinConfirm(false);
+    if (resolvePinConfirm) resolvePinConfirm(null);
     resolvePinConfirm = null;
 }
 
 // Exported gate: call before any inventory item / order deletion.
-// Returns true only when the user has entered the correct Admin PIN.
-// If no PIN is set up yet, routes the user into setup instead and returns false.
+// Resolves to the verified 4-digit PIN, which the caller must forward to the
+// server delete endpoint so the deletion itself carries proof of verification.
+// Resolves to null when the user cancels or has no PIN configured yet.
 export function requireAdminPin() {
     if (!hasPinConfigured) {
         openSetupFlow();
-        return Promise.resolve(false);
+        return Promise.resolve(null);
     }
     openPinGate();
     return new Promise(resolve => {
@@ -209,7 +210,7 @@ export function requireAdminPin() {
         const gateModal = document.getElementById('admin-pin-gate-modal');
         const observer = new MutationObserver(() => {
             if (gateModal.classList.contains('is-hidden')) {
-                settle(false);
+                settle(null);
             }
         });
         observer.observe(gateModal, { attributes: true, attributeFilter: ['class'] });

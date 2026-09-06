@@ -11,6 +11,7 @@ on:
       - 'package-lock.json'
       - 'vite.config.js'
       - 'firebase.json'
+      - 'firestore.rules'
       - '.env.production'
       - '.github/workflows/deploy-frontend.yml'
   pull_request:
@@ -23,6 +24,7 @@ on:
       - 'package-lock.json'
       - 'vite.config.js'
       - 'firebase.json'
+      - 'firestore.rules'
       - '.env.production'
 
 permissions:
@@ -58,6 +60,22 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           projectId: minipos-d9d92
           channelId: live
+
+      # Runs after the hosting deploy on purpose: the rules deny client-side
+      # deletes, so the browser bundle that routes deletes through the backend
+      # has to be live first or deletes break in the gap between the two.
+      - name: Deploy Firestore rules (production)
+        if: github.event_name == 'push'
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-sa.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json" \
+            npx --yes firebase-tools@15 deploy \
+              --only firestore:rules \
+              --project minipos-d9d92 \
+              --non-interactive
+          rm -f "$RUNNER_TEMP/firebase-sa.json"
 
       - name: Deploy preview channel (PR)
         if: github.event_name == 'pull_request'

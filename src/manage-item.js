@@ -492,15 +492,15 @@ async function handleDelete() {
     });
     if (!confirmed) return;
 
-    const pinOk = await requireAdminPin();
-    if (!pinOk) return;
+    const pin = await requireAdminPin();
+    if (!pin) return;
 
     const btn = document.getElementById('mi-delete-btn');
     btn.disabled    = true;
     btn.textContent = 'Deleting...';
 
     try {
-        await deleteInventoryItem(item.id);
+        await deleteInventoryItem(item.id, pin);
         removeLocalItem(item.id);
         selection.clear();
         document.getElementById('mi-detail-view').classList.add('is-hidden');
