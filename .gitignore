@@ -48,5 +48,6 @@ CLAUDE.md
 .claude/
 sandbox/
 docs/
+DEPLOY_EXPLAINED.md
 
 .env.refresh

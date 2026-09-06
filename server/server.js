@@ -245,16 +245,21 @@ app.post('/api/orders/delete', adminDeleteLimiter, requireAuth, async (req, res)
 
             transaction.delete(orderRef);
 
+            // Stock is restored, promo.usedQty is deliberately NOT. A promo counter
+            // must only ever move forward, because the promo now on the item may not
+            // be the one that was sold: removing a promo writes `promo: null` (so an
+            // increment(-n) here would resurrect it as { usedQty: -n } with no rules),
+            // and editing one replaces the rules while carrying usedQty over. An order
+            // line records only promoDiscountPct/promoDiscountedQty, with no promo id
+            // to check against, so the safe rollback cannot be written at all.
+            // stockLevel has none of these problems: it is a bare number with no rules
+            // or identity attached to it.
             items.forEach((item, i) => {
                 if (!inventorySnaps[i].exists) return;
-                const updates = {
+                transaction.update(inventoryRefs[i], {
                     stockLevel: admin.firestore.FieldValue.increment(item.quantity),
                     lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
-                };
-                if (item.promoDiscountedQty > 0) {
-                    updates['promo.usedQty'] = admin.firestore.FieldValue.increment(-item.promoDiscountedQty);
-                }
-                transaction.update(inventoryRefs[i], updates);
+                });
             });
             return true;
         });

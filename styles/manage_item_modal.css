@@ -296,6 +296,21 @@
     line-height: 1.45;
     color: var(--clr-text-secondary);
 }
+.mi-promo-hint.is-hidden { display: none; }
+
+/* The locked note explains a field the user cannot type in, so it carries a
+   little more weight than the general promotion hint above it. */
+.mi-promo-hint--locked {
+    color: var(--clr-text-primary);
+}
+
+/* Discount % is disabled for the life of a promotion (see setPctLocked). Without
+   this it keeps the same styling as an editable field and just stops responding. */
+.mi-field__input:disabled {
+    background: var(--clr-surface-alt);
+    color: var(--clr-text-secondary);
+    cursor: not-allowed;
+}
 
 /* Clearing a promotion is a quiet text action, not a primary button: it only
    empties the fields, and nothing is actually removed until Save Changes. */

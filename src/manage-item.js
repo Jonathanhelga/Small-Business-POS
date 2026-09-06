@@ -244,6 +244,17 @@ function fillPromoFields(promo) {
 
     renderPromoUsage(promo);
     document.getElementById('mi-promo-remove').disabled = !promo;
+    setPctLocked(Boolean(promo));
+}
+
+// The discount rate is what usedQty counts against, so it is fixed for the life of
+// a promotion. The other three rules stay editable: changing the cap, the per-order
+// limit or the date never makes the existing count mean something different.
+// Removing the promotion writes `promo: null`, which drops usedQty too, so the next
+// promotion starts from a clean counter with the rate editable again.
+function setPctLocked(locked) {
+    promoInputs().pct.disabled = locked;
+    document.getElementById('mi-promo-pct-lock').classList.toggle('is-hidden', !locked);
 }
 
 function clearPromoFields() {
@@ -253,6 +264,7 @@ function clearPromoFields() {
     total.value = '';
     max.value = '';
     renderPromoUsage(null);
+    setPctLocked(false);
 }
 
 // The count can lag: `allItems` is loaded once per modal open, so it reflects
